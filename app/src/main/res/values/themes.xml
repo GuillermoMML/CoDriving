@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Definir el estilo de tu tema -->
+    <style name="Theme.CoDriving" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:icon">@drawable/iconcar</item>
+        <item name="android:fontFamily">@font/regular</item>
+    </style>
+</resources>

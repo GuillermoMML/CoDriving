@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">CoDriving</string>
+    <string name = "categories">Categories</string>
+    <string name = "featured_deals">Featured Deals</string>
+    <string name = "recent_searches">Recent Searches</string>
+    <string name="logo_search">Encuentra coche donde quieras</string>
+    <string name="pick_up">Pick up location</string>
+    <string name="reservation_start">Reservation starts</string>
+    <string name ="reservation_ends">Reservation ends</string>
+</resources>
