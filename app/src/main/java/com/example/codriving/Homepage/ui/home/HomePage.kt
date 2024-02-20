@@ -2,7 +2,6 @@ package com.example.codriving.Homepage.ui.home
 
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -12,9 +11,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -38,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,13 +51,17 @@ import coil.compose.AsyncImage
 import com.example.codriving.Homepage.domain.SearchViewModel
 import com.example.codriving.Homepage.ui.home.navigationBar.navigationBar
 import com.example.codriving.R
+import com.example.codriving.data.RentCars
 import com.example.codriving.navigation.AppScreens
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomePage(navController: NavController) {
-    val viewModel = SearchViewModel()
+fun HomePage(
+    navController: NavController,
+    viewModel: HomeViewModel
+) {
+    val featuredCars = viewModel.featuredCars
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         modifier = Modifier
@@ -62,7 +69,11 @@ fun HomePage(navController: NavController) {
         topBar = { HeaderHome(scrollBehavior) },
         bottomBar = { navigationBar() },
         content = { paddingValues ->
-            BodyHome(paddingValues, viewModel,navController) // Pass paddingValues to BodyHome if needed
+            BodyHome(
+                paddingValues,
+                navController,
+                featuredCars
+            ) // Pass paddingValues to BodyHome if needed
         }
 
     )
@@ -94,9 +105,9 @@ fun SearchBar(viewModel: SearchViewModel, navController: NavController) {
             interactionSource = remember {
                 MutableInteractionSource()
             }.also { interactionSource ->
-                LaunchedEffect(interactionSource){
-                    interactionSource.interactions.collect{
-                        if(it is PressInteraction.Release){
+                LaunchedEffect(interactionSource) {
+                    interactionSource.interactions.collect {
+                        if (it is PressInteraction.Release) {
                             navController.navigate(route = AppScreens.SearchScreen.route)
                         }
                     }
@@ -132,12 +143,17 @@ fun HeaderHome(scrollBehavior: TopAppBarScrollBehavior) {
 
 
 @Composable
-fun BodyHome(paddingValues: PaddingValues, viewModel: SearchViewModel, navController: NavController) {
+fun BodyHome(
+    paddingValues: PaddingValues,
+    navController: NavController,
+    featuredCars: List<RentCars>
+) {
+    val viewModel = SearchViewModel()
     Column(
         modifier = Modifier.padding(paddingValues)
     ) {
         Column {
-            SearchBar(viewModel,navController)
+            SearchBar(viewModel, navController)
             Text(
                 text = "Categories",
                 fontSize = 24.sp,
@@ -264,100 +280,11 @@ fun BodyHome(paddingValues: PaddingValues, viewModel: SearchViewModel, navContro
                 .fillMaxWidth()
                 .padding(10.dp)
         ) {
-
-            item {
-                Column {
-                    Card(
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
-                        ),
-                    ) {
-                        AsyncImage(
-                            model = "https://loremflickr.com/520/440/SUV",
-                            contentDescription = null,
-                            modifier = Modifier.clip(RoundedCornerShape(10.dp))
-                        )
-                    }
-                    Text(text = "SUV")
-
-                }
+            items(featuredCars) { featuredCars ->
+                CardFeaturedCars(featuredCars,navController)
             }
-            item {
-                Column {
-                    Card(
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
-                        ),
-                    ) {
-                        AsyncImage(
-                            model = "https://loremflickr.com/520/440/Minivan",
-                            contentDescription = null,
-                            modifier = Modifier.clip(RoundedCornerShape(10.dp))
-
-                        )
-                    }
-                    Text(text = "Minivan")
-                }
-
-
-            }
-            item {
-                Column {
-                    Card(
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
-                        ),
-                    ) {
-                        AsyncImage(
-                            model = "https://loremflickr.com/520/440/Truck",
-                            contentDescription = null,
-                            modifier = Modifier.clip(RoundedCornerShape(10.dp))
-
-                        )
-                    }
-                    Text(text = "Truck")
-
-                }
-
-            }
-            item {
-                Column {
-                    Card(
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
-                        ),
-                    ) {
-                        AsyncImage(
-                            model = "https://loremflickr.com/520/440/Luxury",
-                            contentDescription = null,
-                            modifier = Modifier.clip(RoundedCornerShape(10.dp))
-
-                        )
-                    }
-                    Text(text = "Luxury")
-
-                }
-            }
-            item {
-                Column {
-                    Card(
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
-                        ),
-                    ) {
-                        AsyncImage(
-                            model = "https://loremflickr.com/520/440/Convertible",
-                            contentDescription = null,
-                            modifier = Modifier.clip(RoundedCornerShape(10.dp))
-
-                        )
-                    }
-                    Text(text = "Convertible")
-
-                }
-            }
-
         }
+
         Text(
             text = "Recent Searches",
             fontSize = 24.sp,
@@ -377,6 +304,35 @@ fun BodyHome(paddingValues: PaddingValues, viewModel: SearchViewModel, navContro
                 Text(text = "Hola")
             }
         }
+    }
+}
+
+@Composable
+fun CardFeaturedCars(
+    featuredCars: RentCars,
+    navController: NavController,
+) {
+    Column() {
+        Card(
+            modifier = Modifier
+                .width(200.dp)
+                .height(150.dp),
+
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 6.dp
+            ),
+            onClick = {navController.navigate(route = AppScreens.RentCarScreen.route+"/${featuredCars.id}")}
+        ) {
+            AsyncImage(
+                model = featuredCars.image[0],
+                contentDescription = featuredCars.model,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+        Text(text = featuredCars.model)
     }
 }
 

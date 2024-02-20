@@ -10,13 +10,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -35,9 +39,12 @@ import kotlinx.coroutines.flow.asStateFlow
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchPage(navController: NavHostController) {
+    val state = rememberDatePickerState()
+    val openDialog = remember { mutableStateOf(true) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     var _searchText = MutableStateFlow("")
     val serachText = _searchText.asStateFlow()
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
@@ -101,9 +108,40 @@ fun SearchPage(navController: NavHostController) {
                     .fillMaxWidth()
                     .padding(5.dp)) {
                     Text(text = stringResource(id = R.string.pick_up))
-
                 }
-            } // Pass paddingValues to BodyHome if needed
+                if (openDialog.value) {
+                    DatePickerDialog(
+                        onDismissRequest = {
+                            openDialog.value = false
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+
+                                    openDialog.value = false
+                                }
+                            ) {
+                                Text("OK")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    openDialog.value = false
+                                }
+                            ) {
+                                Text("CANCEL")
+                            }
+                        }
+                    ) {
+                        androidx.compose.material3.DatePicker(state = state,
+                            modifier = Modifier
+                                .size(400.dp)
+                                .padding(15.dp))
+                    }
+                }
+
+            }
         }
 
     )

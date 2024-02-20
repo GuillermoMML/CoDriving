@@ -20,6 +20,10 @@ android {
         }
     }
 
+    kotlin{
+        jvmToolchain(8)
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -30,8 +34,10 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+
     }
     kotlinOptions {
         jvmTarget = "1.8"
@@ -53,6 +59,9 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    //Ciclo de vido de los viewModels
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
     implementation("androidx.compose.ui:ui")
@@ -68,7 +77,13 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("io.coil-kt:coil:2.2.0")
-    implementation ("io.coil-kt:coil-compose:2.2.2")
+    implementation("io.coil-kt:coil:2.5.0")
+    implementation ("io.coil-kt:coil-compose:2.5.0")
 
+    //Desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4") // <- this dependency is required
+
+    //Carrucel
+    implementation("com.google.accompanist:accompanist-pager:0.20.0")
+    implementation("androidx.compose.ui:ui-util")
 }
