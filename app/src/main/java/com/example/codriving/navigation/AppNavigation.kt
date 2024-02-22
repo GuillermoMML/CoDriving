@@ -29,8 +29,15 @@ fun AppNavigation() {
             arguments = listOf(navArgument(name = "idRentCar") {
                 type = NavType.IntType
             })
-        ) {backStackEntry ->
-            RentCarScreen(navController,backStackEntry.arguments?.getInt("idRentCar"))
+        ) { backStackEntry ->
+            val rentCarViewModel: RentCarViewModel = viewModel() // Access ViewModel
+
+            RentCarScreen(
+                navController,
+                rentCarViewModel,
+                backStackEntry.arguments?.getInt("idRentCar")
+                ,
+            )
         }
     }
 }

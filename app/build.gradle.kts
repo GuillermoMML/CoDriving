@@ -1,7 +1,11 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id ("kotlin-kapt")
+    id("dagger.hilt.android.plugin")
 }
+
+
 
 android {
     namespace = "com.example.codriving"
@@ -20,9 +24,6 @@ android {
         }
     }
 
-    kotlin{
-        jvmToolchain(8)
-    }
 
     buildTypes {
         release {
@@ -35,12 +36,14 @@ android {
     }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
 
     }
+
+
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -59,6 +62,7 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.2")
     //Ciclo de vido de los viewModels
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
 
@@ -86,4 +90,11 @@ dependencies {
     //Carrucel
     implementation("com.google.accompanist:accompanist-pager:0.20.0")
     implementation("androidx.compose.ui:ui-util")
+
+    implementation(project.dependencies.platform("io.insert-koin:koin-bom:3.5.1"))
+    implementation ("io.insert-koin:koin-core")
+    implementation("io.insert-koin:koin-compose")
+    //Dagger Hilt
+    implementation("com.google.dagger:hilt-android:2.50")
+    kapt("com.google.dagger:hilt-compiler:2.50")
 }

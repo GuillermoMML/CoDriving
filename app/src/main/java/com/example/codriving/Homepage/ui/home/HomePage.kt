@@ -324,15 +324,15 @@ fun CardFeaturedCars(
             onClick = {navController.navigate(route = AppScreens.RentCarScreen.route+"/${featuredCars.id}")}
         ) {
             AsyncImage(
-                model = featuredCars.image[0],
-                contentDescription = featuredCars.model,
+                model = featuredCars.car.image[0],
+                contentDescription = featuredCars.car.brand,
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
                     .fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
         }
-        Text(text = featuredCars.model)
+        Text(text = featuredCars.car.brand)
     }
 }
 
