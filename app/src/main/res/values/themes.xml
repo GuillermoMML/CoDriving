@@ -3,7 +3,7 @@
 
     <!-- Definir el estilo de tu tema -->
     <style name="Theme.CoDriving" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:icon">@drawable/iconcar</item>
+        <item name="android:icon">@drawable/ic_google</item>
         <item name="android:fontFamily">@font/regular</item>
     </style>
 </resources>

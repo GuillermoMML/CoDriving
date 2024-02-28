@@ -4,4 +4,6 @@ sealed class AppScreens(val route:String){
     object HomeScreen: AppScreens("HomeScreen")
     object SearchScreen: AppScreens("SearchScreen")
     object RentCarScreen: AppScreens("RentCarScreen")
+
+    object SignInScreen: AppScreens("SignInScreen")
 }

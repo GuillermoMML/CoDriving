@@ -2,6 +2,7 @@ package com.example.codriving.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,6 +16,7 @@ import com.example.codriving.Searchpage.ui.viewSearch.SearchPage
 
 @Composable
 fun AppNavigation() {
+
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = AppScreens.HomeScreen.route) {
         composable(route = AppScreens.HomeScreen.route) {
@@ -35,9 +37,10 @@ fun AppNavigation() {
             RentCarScreen(
                 navController,
                 rentCarViewModel,
-                backStackEntry.arguments?.getInt("idRentCar")
-                ,
+                backStackEntry.arguments?.getInt("idRentCar"),
             )
         }
+
+
     }
 }

@@ -1,4 +1,4 @@
-package com.example.codriving.Homepage.domain
+package com.example.codriving.Homepage.ui.home
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,9 +11,6 @@ class SearchViewModel : ViewModel() {
 
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText
-
-    private val _searchResults = MutableStateFlow(listOf<String>())
-    val searchResults: StateFlow<List<String>> = _searchResults
 
     fun onSearchTextChanged(text: String) {
         _searchText.value = text

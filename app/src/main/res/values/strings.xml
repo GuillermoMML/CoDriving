@@ -7,4 +7,9 @@
     <string name="pick_up">Pick up location</string>
     <string name="reservation_start">Reservation starts</string>
     <string name ="reservation_ends">Reservation ends</string>
+    <string name="contact_owner">Contact owner</string>
+    <string name="book">Book</string>
+    <string name="notAccountYet">Crear cuenta</string>
+
+    <string name="default_web_client_id">302335285962-nkks71k3a379m88tmakmsosij0balq9q.apps.googleusercontent.com</string>
 </resources>

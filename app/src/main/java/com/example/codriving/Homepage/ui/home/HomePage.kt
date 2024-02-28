@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
@@ -42,13 +43,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.codriving.Homepage.domain.SearchViewModel
 import com.example.codriving.Homepage.ui.home.navigationBar.navigationBar
 import com.example.codriving.R
 import com.example.codriving.data.RentCars
@@ -89,18 +91,16 @@ fun SearchBar(viewModel: SearchViewModel, navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
 
     ) {
         TextField(
             value = searchText,
+            readOnly = true,
             onValueChange = { viewModel.onSearchTextChanged(it) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
-                .background(Color.LightGray)
                 .clip(RoundedCornerShape(10.dp)),
-
             label = { Text("Search") },
             interactionSource = remember {
                 MutableInteractionSource()

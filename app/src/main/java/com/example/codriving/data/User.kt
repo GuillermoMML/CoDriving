@@ -1,7 +1,3 @@
 package com.example.codriving.data
 
-data class User(
-    val id: Int,
-    val Name: String,
-) {
-}
+data class User(val username: String, val password: String)

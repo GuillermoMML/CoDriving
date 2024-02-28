@@ -6,16 +6,25 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+import com.example.codriving.login.domain.GoogleAuthUiClient
+import com.example.codriving.login.ui.LoginScreen
 import com.example.codriving.navigation.AppNavigation
 import com.example.codriving.ui.theme.CoDrivingTheme
+import com.google.android.gms.auth.api.identity.Identity
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val gooogleAuthUiCLient by lazy {
+        GoogleAuthUiClient(
+            context = applicationContext,
+            oneTapClient = Identity.getSignInClient(applicationContext)
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -25,17 +34,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation()
+
+                    val navController = rememberNavController()
+                    //AppNavigation()
+                    LoginScreen()
                 }
             }
         }
     }
 }
 
-@Preview
-@Composable
-fun DefaultPreview(){
-    CoDrivingTheme {
-        AppNavigation()
-    }
-}

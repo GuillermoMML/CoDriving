@@ -6,6 +6,6 @@ data class Car(
     val model: String,
     val year: Int,
     val kilometers: Int,
-    val image: Array<String>,
+    val image: List<String>,
 )
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "302335285962",
+    "project_id": "codriving-92f34",
+    "storage_bucket": "codriving-92f34.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:302335285962:android:e067ff813912051dd0b233",
+        "android_client_info": {
+          "package_name": "com.example.codriving"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJ6MaO9ReQUmJayzKnEnVOhvyXetj-FZk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,10 +2,11 @@ package com.example.codriving.data
 
 import java.time.LocalDate
 
-data class Review(
-    val id: Int,
+data class RentReview(
+    val id: Int,//Id del RentView
     val author: String,
     val rating: Int,
     val comment: String,
-    val date: LocalDate
+    val date: LocalDate,
+    val RentCars: RentCars
 )
