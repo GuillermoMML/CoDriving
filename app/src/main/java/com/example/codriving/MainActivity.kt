@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
-import com.example.codriving.login.domain.GoogleAuthUiClient
-import com.example.codriving.login.ui.LoginScreen
+import com.example.codriving.LoginPage.domain.GoogleAuthUiClient
 import com.example.codriving.navigation.AppNavigation
 import com.example.codriving.ui.theme.CoDrivingTheme
 import com.google.android.gms.auth.api.identity.Identity
@@ -35,9 +33,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-                    val navController = rememberNavController()
-                    //AppNavigation()
-                    LoginScreen()
+                    AppNavigation()
                 }
             }
         }

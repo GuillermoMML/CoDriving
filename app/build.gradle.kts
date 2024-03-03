@@ -98,10 +98,12 @@ dependencies {
     implementation("io.insert-koin:koin-compose")
     //Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.50")
+
     kapt("com.google.dagger:hilt-compiler:2.50")
 
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    implementation("com.google.firebase:firebase-firestore")
     implementation ("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     implementation("com.google.firebase:firebase-analytics")

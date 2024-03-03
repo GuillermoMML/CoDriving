@@ -1,4 +1,4 @@
-package com.example.codriving.login.domain
+package com.example.codriving.LoginPage.domain
 
 import android.content.Context
 import android.content.Intent

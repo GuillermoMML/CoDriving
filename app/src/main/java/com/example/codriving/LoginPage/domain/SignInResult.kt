@@ -1,4 +1,4 @@
-package com.example.codriving.login.domain
+package com.example.codriving.LoginPage.domain
 
 data class SignInResult(
     val data: UserData?,
