@@ -139,7 +139,7 @@ fun RentCarScreen(
                         .padding(paddingValues)
                         .fillMaxSize()
                 ) {
-                    rentCar?.let { CarouselCard(it) } //POner algo en caso de que falle
+                   // rentCar?.let { CarouselCard(it) } //POner algo en caso de que falle
                     rentCar?.let { bodyRest(it) }
                 }
 
@@ -270,7 +270,7 @@ fun bodyRest(rentCar: RentCars) {
     }
 
 }
-
+/*
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun CarouselCard(rentCar: RentCars) {
@@ -312,5 +312,5 @@ fun CarouselCard(rentCar: RentCars) {
     }
     //val pagerState = rememberPagerState(initialPage = 1)
     //val sliderList = listOf()
-}
+}*/
 

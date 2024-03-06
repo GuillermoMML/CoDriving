@@ -3,8 +3,7 @@ package com.example.codriving.data
 import java.time.LocalDate
 
 data class RentCars(
-    val car: Car,
-    val id: Int,
+    val id: String, //Id que almacena el carId del firestore
     val ownerName: String,
     val pricePerDay: Double,
     val startDate: LocalDate,

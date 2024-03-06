@@ -98,9 +98,9 @@ dependencies {
     implementation("io.insert-koin:koin-compose")
     //Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.50")
-
+    kapt("com.google.dagger:hilt-android-compiler:2.50")
     kapt("com.google.dagger:hilt-compiler:2.50")
-
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
     implementation("com.google.firebase:firebase-firestore")

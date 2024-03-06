@@ -54,15 +54,15 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
-    loginViewModel: LoginViewModel = LoginViewModel(),
-    navController: NavHostController
-) {
+    navController: NavHostController,
+    viewModel: LoginViewModel,
+    ) {
 
-    val email: String by loginViewModel.email.observeAsState("")
-    val password: String by loginViewModel.password.observeAsState("")
-    val loginEnable: Boolean by loginViewModel.loginEnable.observeAsState(false)
+    val email: String by viewModel.email.observeAsState("")
+    val password: String by viewModel.password.observeAsState("")
+    val loginEnable: Boolean by viewModel.loginEnable.observeAsState(false)
     val errorMessage = remember { mutableStateOf("") }
-    val clicked by loginViewModel.clicked.collectAsState()
+    val clicked by viewModel.clicked.collectAsState()
 
     Column(
         Modifier
@@ -96,16 +96,16 @@ fun LoginScreen(
 
             EmailField(
                 email = email,
-                onTextFieldChanged = { loginViewModel.onLoginChange(it, password) })
+                onTextFieldChanged = { viewModel.onLoginChange(it, password) })
 
             Spacer(modifier = Modifier.height(16.dp))
 
             PasswordField(
                 password = password,
-                onTextFieldChanged = { loginViewModel.onLoginChange(email, it) })
+                onTextFieldChanged = { viewModel.onLoginChange(email, it) })
 
             LoginButton(loginEnable) {
-                loginViewModel.signInWithEmailAndPassword(
+                viewModel.signInWithEmailAndPassword(
                     email = email,
                     password = password,
                     showErrorMessage = { errorMessage.value = it },
@@ -147,8 +147,8 @@ fun LoginScreen(
             ) {
                 Surface(
                     onClick = {
-                        loginViewModel.viewModelScope.launch {
-                            loginViewModel.isClicked()
+                        viewModel.viewModelScope.launch {
+                            viewModel.isClicked()
                         }
                     },
                     shape = RoundedCornerShape(4.dp),

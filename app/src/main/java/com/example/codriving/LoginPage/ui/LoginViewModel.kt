@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.codriving.LoginPage.domain.LoginViewState
+import com.example.codriving.data.repository.FirebaseAuthRepository
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
@@ -17,7 +18,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(): ViewModel() {
+class LoginViewModel @Inject constructor(private val repository: FirebaseAuthRepository): ViewModel() {
 
    // private val _loginViewState = MutableLiveData<LoginViewState>()
 //    val loginViewState: LiveData<LoginViewState> get() = _loginViewState

@@ -1,4 +1,4 @@
-package com.example.codriving.MyRentals.view
+package com.example.codriving.MyRentals
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel

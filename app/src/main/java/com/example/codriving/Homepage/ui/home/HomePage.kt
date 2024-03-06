@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.codriving.Homepage.ui.home.navigationBar.navigationBar
@@ -61,9 +63,12 @@ import com.example.codriving.navigation.AppScreens
 @Composable
 fun HomePage(
     navController: NavController,
-    viewModel: HomeViewModel
 ) {
-    val featuredCars = viewModel.featuredCars
+    val viewModel: HomeViewModel = hiltViewModel() // Injected in the composable
+
+    val topRatedCars by viewModel.topRatedCars.observeAsState(emptyList())
+    val carsByBrand by viewModel.carsByBrand.observeAsState(emptyMap())
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         modifier = Modifier
@@ -74,7 +79,6 @@ fun HomePage(
             BodyHome(
                 paddingValues,
                 navController,
-                featuredCars
             ) // Pass paddingValues to BodyHome if needed
         }
 
@@ -146,7 +150,6 @@ fun HeaderHome(scrollBehavior: TopAppBarScrollBehavior) {
 fun BodyHome(
     paddingValues: PaddingValues,
     navController: NavController,
-    featuredCars: List<RentCars>
 ) {
     val viewModel = SearchViewModel()
     Column(
@@ -165,105 +168,6 @@ fun BodyHome(
 
             )
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-            ) {
-
-                item {
-                    Column {
-                        Card(
-                            elevation = CardDefaults.cardElevation(
-                                defaultElevation = 6.dp
-                            ),
-                        ) {
-                            AsyncImage(
-                                model = "https://loremflickr.com/520/440/SUV",
-                                contentDescription = null,
-                                modifier = Modifier.clip(RoundedCornerShape(10.dp))
-                            )
-                        }
-                        Text(text = "SUV")
-
-                    }
-                }
-                item {
-                    Column {
-                        Card(
-                            elevation = CardDefaults.cardElevation(
-                                defaultElevation = 6.dp
-                            ),
-                        ) {
-                            AsyncImage(
-                                model = "https://loremflickr.com/520/440/Minivan",
-                                contentDescription = null,
-                                modifier = Modifier.clip(RoundedCornerShape(10.dp))
-
-                            )
-                        }
-                        Text(text = "Minivan")
-                    }
-
-
-                }
-                item {
-                    Column {
-                        Card(
-                            elevation = CardDefaults.cardElevation(
-                                defaultElevation = 6.dp
-                            ),
-                        ) {
-                            AsyncImage(
-                                model = "https://loremflickr.com/520/440/Truck",
-                                contentDescription = null,
-                                modifier = Modifier.clip(RoundedCornerShape(10.dp))
-
-                            )
-                        }
-                        Text(text = "Truck")
-
-                    }
-
-                }
-                item {
-                    Column {
-                        Card(
-                            elevation = CardDefaults.cardElevation(
-                                defaultElevation = 6.dp
-                            ),
-                        ) {
-                            AsyncImage(
-                                model = "https://loremflickr.com/520/440/Luxury",
-                                contentDescription = null,
-                                modifier = Modifier.clip(RoundedCornerShape(10.dp))
-
-                            )
-                        }
-                        Text(text = "Luxury")
-
-                    }
-                }
-                item {
-                    Column {
-                        Card(
-                            elevation = CardDefaults.cardElevation(
-                                defaultElevation = 6.dp
-                            ),
-                        ) {
-                            AsyncImage(
-                                model = "https://loremflickr.com/520/440/Convertible",
-                                contentDescription = null,
-                                modifier = Modifier.clip(RoundedCornerShape(10.dp))
-
-                            )
-                        }
-                        Text(text = "Convertible")
-
-                    }
-                }
-            }
         }
         Text(
             text = "Featured Deals",
@@ -274,16 +178,6 @@ fun BodyHome(
                 .padding(8.dp),
             textAlign = TextAlign.Start
         )
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            items(featuredCars) { featuredCars ->
-                CardFeaturedCars(featuredCars,navController)
-            }
-        }
 
         Text(
             text = "Recent Searches",
@@ -312,28 +206,6 @@ fun CardFeaturedCars(
     featuredCars: RentCars,
     navController: NavController,
 ) {
-    Column() {
-        Card(
-            modifier = Modifier
-                .width(200.dp)
-                .height(150.dp),
-
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 6.dp
-            ),
-            onClick = {navController.navigate(route = AppScreens.RentCarScreen.route+"/${featuredCars.id}")}
-        ) {
-            AsyncImage(
-                model = featuredCars.car.image[0],
-                contentDescription = featuredCars.car.brand,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
-        Text(text = featuredCars.car.brand)
-    }
 }
 
 @Composable

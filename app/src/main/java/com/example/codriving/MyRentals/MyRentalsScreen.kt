@@ -1,6 +1,8 @@
-package com.example.codriving.MyRentals.view
+package com.example.codriving.MyRentals
 
 import androidx.compose.runtime.Composable
+
+
 
 @Composable
 fun MyRentalsScreen() {
