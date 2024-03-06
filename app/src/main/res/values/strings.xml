@@ -10,6 +10,9 @@
     <string name="contact_owner">Contact owner</string>
     <string name="book">Book</string>
     <string name="notAccountYet">Crear cuenta</string>
-
+    <string name="newCar">New</string>
     <string name="default_web_client_id">302335285962-nkks71k3a379m88tmakmsosij0balq9q.apps.googleusercontent.com</string>
+    <string name="halfNew">Half New</string>
+    <string name="almostUsed">Used</string>
+    <string name="tooMuchUsed">Too Used</string>
 </resources>

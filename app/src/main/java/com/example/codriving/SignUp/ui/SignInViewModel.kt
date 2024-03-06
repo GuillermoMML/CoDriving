@@ -1,23 +1,31 @@
 package com.example.codriving.SignUp.ui
 
+import com.example.codriving.data.repository.FirebaseAuthRepository
 import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.codriving.repository.AuthRepository
-import com.google.firebase.auth.FirebaseAuth
+import com.example.codriving.data.NewUser
+import com.example.codriving.repository.UserRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
+class SignInViewModel @Inject constructor(private val repository: FirebaseAuthRepository) : ViewModel() {
 
-class SignInViewModel @Inject constructor(private val repository: AuthRepository) : ViewModel() {
+    private val _fullname = MutableLiveData<String>()
+    val fullname: LiveData<String> get() = _fullname
+
+    private val _phone = MutableLiveData("")
+    val phone: LiveData<String> get() = _phone
+
+    private val _location = MutableLiveData(null)
+    val location: MutableLiveData<Nothing?> get() = _location
 
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> get() = _errorMessage
 
-    private val auth = FirebaseAuth.getInstance()
 
     private val _email = MutableLiveData<String>()
     val email: LiveData<String> get() = _email
@@ -28,24 +36,49 @@ class SignInViewModel @Inject constructor(private val repository: AuthRepository
     private val _loginEnable = MutableLiveData<Boolean>()
     val loginEnable: LiveData<Boolean> get() = _loginEnable
 
-    suspend fun signIn(email: String, password: String, onComplete: (Boolean) -> Unit) {
-        try{
-            auth.createUserWithEmailAndPassword(email, password).await()
-            _errorMessage.value = "Se inició sesión exitosamente"
-            onComplete(true)
+    private val userRepository = UserRepository(firestore = FirebaseFirestore.getInstance())
 
+    private val _isLoading = MutableLiveData<Boolean>()
+    val loading: LiveData<Boolean> get() = _isLoading
+
+    suspend fun signIn(email: String, password: String, onComplete: (Boolean) -> Unit) {
+        _isLoading.value = true
+        try{
+            repository.signUp(email, password)
+            val currentUser = repository.getCurrentUser()
+            if (currentUser != null) {
+                val newUser = NewUser(
+                    fullName = _fullname.value,
+                    email = email,
+                    phone = _phone.value,
+                    location = _location.value,
+                    rentalHistory = emptyList(),
+                    ratings = emptyList()
+                )
+                userRepository.createUser(newUser, currentUser.uid)
+                _errorMessage.value = "Se inició sesión exitosamente"
+                onComplete(true)
+            }else{
+                _errorMessage.value = "No se pudo crear el usuario intentar de nuevo"
+                onComplete(false)
+            }
         }catch (e:Exception){
             _errorMessage.value = e.message
             onComplete(false)
+        }finally {
+            _isLoading.value = false
         }
 
     }
 
 
-    fun onSignChange(email: String, password: String) {
+
+    fun onSignChange(email: String, password: String,fullname:String,phone:String) {
         _email.value = email
         _password.value = password
         _loginEnable.value = isValidEmail(email) && isValidPassword(password)
+        _fullname.value = fullname
+        _phone.value = phone
 
     }
 

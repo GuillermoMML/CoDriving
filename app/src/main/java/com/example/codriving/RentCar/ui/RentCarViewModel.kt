@@ -4,14 +4,9 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.codriving.Homepage.data.HomeState
 import com.example.codriving.data.RentCars
-import com.example.codriving.data.ReviewRepository
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import com.example.codriving.data.repository.ReviewRepository
 import kotlinx.coroutines.launch
 
 class RentCarViewModel(
@@ -33,7 +28,7 @@ class RentCarViewModel(
             return
         }
         _error.value = null
-        viewModelScope.launch() {
+       /* viewModelScope.launch() {
             try {
                 val state = HomeState()
                 val rentCar = state.getFeaturedCarById(id)
@@ -43,7 +38,7 @@ class RentCarViewModel(
                 Log.e("RentCarViewModel", "Error fetching RentCar data", e)
                 _error.value = e.message
             }
-        }
+        }*/
     }
 
 
