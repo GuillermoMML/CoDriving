@@ -1,4 +1,4 @@
-package com.example.codriving.LoginPage.ui
+package com.example.codriving.SignUp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Lock
@@ -42,8 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.codriving.R
-import com.example.codriving.SignUp.ui.SignInViewModel
-import com.example.codriving.data.NewUser
 import com.example.codriving.navigation.AppScreens
 import kotlinx.coroutines.launch
 
@@ -70,7 +67,7 @@ fun SignScreen(
                 showError.value = false
             },
             title = { Text(text = "Error") },
-            text = { errorMessage?.let { Text(text = it) } },
+            text = {  Text(text = errorMessage)  },
             confirmButton = {
                 Button(onClick = {
                     showError.value = false

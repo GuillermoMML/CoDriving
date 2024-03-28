@@ -1,11 +1,11 @@
-package com.example.codriving.SignUp.ui
+package com.example.codriving.SignUp
 
-import com.example.codriving.data.repository.FirebaseAuthRepository
 import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.codriving.data.NewUser
+import com.example.codriving.data.repository.FirebaseAuthRepository
 import com.example.codriving.data.repository.UserRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SignInViewModel @Inject constructor(private val repository: FirebaseAuthRepository) : ViewModel() {
 
-    private val _fullname = MutableLiveData<String>()
+   private val _fullname = MutableLiveData<String>()
     val fullname: LiveData<String> get() = _fullname
 
     private val _phone = MutableLiveData("")

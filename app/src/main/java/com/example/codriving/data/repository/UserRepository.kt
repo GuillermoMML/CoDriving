@@ -1,5 +1,6 @@
 package com.example.codriving.data.repository
 
+import android.util.Log
 import com.example.codriving.data.NewUser
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -19,6 +20,24 @@ class UserRepository @Inject constructor(private val firestore: FirebaseFirestor
         }
     }
 
+    suspend fun getName(uid: String): String {
+        val db = FirebaseFirestore.getInstance()
+        val userDocument = db.collection("Users").document(uid)
+
+        var fullName = ""
+
+        userDocument.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                fullName = document.getString("fullName").toString()
+            } else {
+                Log.e(TAG, "El usuario no existe")
+            }
+        }
+
+
+        return fullName
+
+    }
 
 
     // Otras funciones relacionadas con operaciones de usuario si es necesario

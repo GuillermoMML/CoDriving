@@ -1,12 +1,13 @@
 package com.example.codriving.data
 
-import java.time.LocalDate
+import com.google.firebase.firestore.DocumentReference
+import java.sql.Timestamp
 
 data class RentCars(
-    val id: String, //Id que almacena el carId del firestore
+    val carId: DocumentReference, //Id que almacena el carId del firestore
     val ownerName: String,
     val pricePerDay: Double,
-    val startDate: LocalDate,
-    val rating: Double,
-    val endDate: LocalDate
+    val startDate: Timestamp,
+    val rating: Double = 0.0,
+    val endDate: Timestamp
 )

@@ -15,4 +15,6 @@
     <string name="halfNew">Half New</string>
     <string name="almostUsed">Used</string>
     <string name="tooMuchUsed">Too Used</string>
+    <string name="carsFromBanner">Publica tu coche</string>
+    <string name="brand">Marca</string>
 </resources>
