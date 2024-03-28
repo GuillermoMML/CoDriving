@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
@@ -54,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -63,9 +61,6 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.example.codriving.MyRentals.DateRangePickerSample
-import com.example.codriving.MyRentals.PrecioTextField
-import com.example.codriving.MyRentals.getFormattedDate
 import com.example.codriving.data.Car
 import com.example.codriving.navigation.AppScreens
 import kotlinx.coroutines.launch
@@ -428,25 +423,5 @@ fun previewCardsList(
     HorizontalDivider()
 }
 
-@Composable
-@Preview
-fun preview() {
-    val imagePainter = rememberAsyncImagePainter(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data("https://firebasestorage.googleapis.com/v0/b/codriving-92f34.appspot.com/o/images%2F541d30a8-8f0b-4bfd-b016-2d3820ac080c?alt=media&token=11905949-2294-43cc-b931-e579f3a08b54")
-            .crossfade(true)
-            .build(),
-    )
-    Card(
-        shape = MaterialTheme.shapes.small
-    ) {
 
-        Image(
-            painter = imagePainter,
-            contentDescription = "Car Image",
-            contentScale = ContentScale.Fit,
-        )
-    }
-
-}
 

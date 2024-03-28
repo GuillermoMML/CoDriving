@@ -1,4 +1,4 @@
-package com.example.codriving.MyRentals
+package com.example.codriving.MyCars
 
 
 import androidx.compose.foundation.layout.Box
@@ -50,12 +50,7 @@ fun PrecioTextField(
 
 
 
-fun getFormattedDate(timeInMillis: Long): String {
-    val calender = Calendar.getInstance()
-    calender.timeInMillis = timeInMillis
-    val dateFormat = SimpleDateFormat("dd/MM/yyyy")
-    return dateFormat.format(calender.timeInMillis)
-}
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,6 +105,13 @@ fun DateRangePickerSample(
             selectedDayContainerColor = Color.Black
         )
     )
+}
+
+fun getFormattedDate(timeInMillis: Long): String {
+    val calender = Calendar.getInstance()
+    calender.timeInMillis = timeInMillis
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy")
+    return dateFormat.format(calender.timeInMillis)
 }
 
 
