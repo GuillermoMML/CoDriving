@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
@@ -40,10 +42,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.codriving.R
+import com.example.codriving.data.Car
 import com.example.codriving.data.RentCars
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.HorizontalPagerIndicator
+import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
 
 
 class RentCarScreen {
@@ -53,17 +64,19 @@ class RentCarScreen {
 @Composable
 fun RentCarScreen(
     navController: NavHostController,
-    rentCarViewModel: RentCarViewModel,
-    idRentCar: Int?
+    rentCarViewModel: RentCarViewModel = hiltViewModel(),
+    idRentCar: String?
 ) {
+
     val isLoading by rentCarViewModel.isLoading.observeAsState()
     val rentCar by rentCarViewModel.rentCar.observeAsState()
     val error by rentCarViewModel.error.observeAsState()
     var snackbarHostState = remember { SnackbarHostState() }
     var scope = rememberCoroutineScope()
+    var listOfRents = rentCarViewModel.listOfRents.observeAsState()
 
     LaunchedEffect(idRentCar) {
-        rentCarViewModel.loadData(idRentCar)
+        rentCarViewModel.loadData(idRentCar!!)
     }
 
 
@@ -128,9 +141,10 @@ fun RentCarScreen(
                         .padding(paddingValues)
                         .fillMaxSize()
                 ) {
-                   // rentCar?.let { CarouselCard(it) } //POner algo en caso de que falle
-                    rentCar?.let { bodyRest(it) }
+                   rentCar?.let { CarouselCard(it) } //POner algo en caso de que falle
+                   listOfRents?.let { it.value?.let { it1 -> bodyRest(it1) } }
                 }
+
 
 
             }
@@ -166,24 +180,32 @@ fun RatingBar(
 }
 
 @Composable
-fun bodyRest(rentCar: RentCars) {
+fun bodyRest(rentCars: List<RentCars>) {
+    val ownerName = rentCars[0].ownerName
+    val rating = rentCars[0].rating
     Column(Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            Text(
-                text = rentCar?.pricePerDay.toString() + "€/day",
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
-            )
+            Column {
+                rentCars.forEach {
+                    val startDate: Date = it.startDate.toDate()
+                    val endDate : Date = it.endDate.toDate()
+
+                    val dateFormat = SimpleDateFormat("dd/MM/yyyy")
+                    val starformattedDate: String = dateFormat.format(startDate)
+                    val endformattedDate: String = dateFormat.format(endDate)
+
+                    Text(
+                        text = it.pricePerDay.toString() + "€/day "+starformattedDate+"-"+endformattedDate,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+
+                }
+            }
         }
-       /* Box(modifier = Modifier.fillMaxWidth()) {
-            Text(text = rentCar.startDate.format(DateTimeFormatter.ofPattern("LLL dd"))
-                .replaceFirstChar { it.uppercase() } + " - " + rentCar.endDate.format(
-                DateTimeFormatter.ofPattern("LLL dd")
-            ).replaceFirstChar { it.uppercase() })
-        }*/
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -215,7 +237,7 @@ fun bodyRest(rentCar: RentCars) {
                         text = "Owner",
                         fontWeight = FontWeight.Bold,
                     )
-                    Text(text = rentCar.ownerName)
+                    Text(text =ownerName)
                 }
             }
         }
@@ -241,12 +263,12 @@ fun bodyRest(rentCar: RentCars) {
                     .weight(1f)
             ) {
                 Text(
-                    text = rentCar.rating.toString(),
+                    text = rating.toString(),
                     fontSize = 30.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
 
-                RatingBar(rentCar.rating)
+                RatingBar(rating)
                 Text(text = "Total Reviews HERE")
             }
             Column(
@@ -259,21 +281,20 @@ fun bodyRest(rentCar: RentCars) {
     }
 
 }
-/*
+
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun CarouselCard(rentCar: RentCars) {
+fun CarouselCard(rentCar: Car) {
     val pageState = rememberPagerState()
-    val scope = rememberCoroutineScope()
     Column(
         modifier = Modifier
             .fillMaxWidth()
 
     ) {
         HorizontalPager(
-            count = rentCar.car.image.size,
+            count = rentCar.image.size,
             state = pageState,
-            key = { rentCar.car.image[it] },
+            key = { rentCar.image[it] },
             modifier = Modifier
                 .height(200.dp)
         ) { index ->
@@ -284,7 +305,7 @@ fun CarouselCard(rentCar: RentCars) {
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = rentCar.car.image[index],
+                    model = rentCar.image[index],
                     contentDescription = null,
                     modifier = Modifier.clip(RoundedCornerShape(10.dp)),
                     contentScale = ContentScale.Fit
@@ -301,5 +322,5 @@ fun CarouselCard(rentCar: RentCars) {
     }
     //val pagerState = rememberPagerState(initialPage = 1)
     //val sliderList = listOf()
-}*/
+}
 

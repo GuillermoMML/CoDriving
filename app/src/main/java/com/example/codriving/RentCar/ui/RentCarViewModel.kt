@@ -1,15 +1,17 @@
 package com.example.codriving.RentCar.ui
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.example.codriving.data.Car
 import com.example.codriving.data.RentCars
 import com.example.codriving.data.repository.ReviewRepository
-import kotlinx.coroutines.launch
+import com.example.codriving.data.repository.UploadCarRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class RentCarViewModel(
+@HiltViewModel
+class RentCarViewModel @Inject constructor(private val uploadCarRepository: UploadCarRepository
 ) : ViewModel() {
 
     val repositoryReview = ReviewRepository()
@@ -17,28 +19,21 @@ class RentCarViewModel(
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val _rentCar = MutableLiveData<RentCars?>()
-    val rentCar: LiveData<RentCars?> get() = _rentCar
+    private val _rentCar = MutableLiveData<Car?>()
+    val rentCar: LiveData<Car?> get() = _rentCar
+
+    private val _listOfRents = MutableLiveData<List<RentCars>>(emptyList())
+    val listOfRents: LiveData<List<RentCars>> get() = _listOfRents
+
     private val _error = MutableLiveData<String?>(null)
     val error: LiveData<String?> = _error
 
-     suspend fun loadData(id: Int?) {
-        if (id == null) {
-            // Handle invalid ID or provide UI feedback
-            return
-        }
+     suspend fun loadData(id: String) {
+         _rentCar.value = uploadCarRepository.getCarById(id)
+         _listOfRents.value = uploadCarRepository.getRentsByCar(_rentCar.value!!.rentCars)
+         _isLoading.value =true
         _error.value = null
-       /* viewModelScope.launch() {
-            try {
-                val state = HomeState()
-                val rentCar = state.getFeaturedCarById(id)
-                _rentCar.value = rentCar
-                _isLoading.value = true
-            } catch (e: Exception) {
-                Log.e("RentCarViewModel", "Error fetching RentCar data", e)
-                _error.value = e.message
-            }
-        }*/
+
     }
 
 

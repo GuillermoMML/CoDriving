@@ -1,6 +1,5 @@
 package com.example.codriving.MyCars
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +22,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Done
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -36,6 +36,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
@@ -52,15 +54,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import com.example.codriving.data.Car
 import com.example.codriving.navigation.AppScreens
 import kotlinx.coroutines.launch
@@ -82,9 +81,9 @@ fun ListMyCarsScreen(navController: NavHostController) {
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     var selectStartDay by remember { mutableStateOf("") }
     var selectEndDay by remember { mutableStateOf("") }
-    var finishedPublished by remember {
-        mutableStateOf(false)
-    }
+    var finishedPublished by remember { mutableStateOf(false) }
+    var showSnackbar by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
 
     var currentCar by remember {
@@ -95,17 +94,12 @@ fun ListMyCarsScreen(navController: NavHostController) {
             false
         )
     }
-    var showDatePicker by remember {
-        mutableStateOf(
-            false
-        )
-    }
 
-    if (showDatePicker) {
-        coroutineScope.launch {
-            bottomSheetState.show()
-        }
-
+    if (finishedPublished) {
+        selectEndDay = ""
+        selectStartDay = ""
+        showModal = false
+        finishedPublished = false
     }
 
 
@@ -114,9 +108,11 @@ fun ListMyCarsScreen(navController: NavHostController) {
             listState.firstVisibleItemIndex == 0
         }
     }
+
     if (isLoaded.value!!) {
 
         ModalBottomSheetLayout(
+
             sheetState = bottomSheetState,
             sheetContent = {
                 Box(
@@ -174,11 +170,16 @@ fun ListMyCarsScreen(navController: NavHostController) {
                                 coroutineScope.launch {
                                     if (viewModel.verifyPublishFields(idCar = it)) {
                                         finishedPublished = true
+                                    } else {
+                                        showSnackbar = true
                                     }
                                 }
                             },
                             onShowDatePicker = {
-                                showDatePicker = true
+                                coroutineScope.launch {
+                                    bottomSheetState.show()
+                                }
+
                             }
                         )
 
@@ -187,6 +188,9 @@ fun ListMyCarsScreen(navController: NavHostController) {
             }
 
             Scaffold(
+                snackbarHost = {
+                    SnackbarHost(hostState = snackbarHostState)
+                },
                 floatingActionButton = {
                     ExtendedFloatingActionButton(
                         onClick = { navController.navigate(AppScreens.CarsFormScreen.route) },
@@ -198,7 +202,12 @@ fun ListMyCarsScreen(navController: NavHostController) {
                 floatingActionButtonPosition = FabPosition.End,
 
                 content = { paddingValues ->
-
+                    if (showSnackbar) {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("Rellene todos los campos")
+                            showSnackbar = false
+                        }
+                    }
                     Box(
                         Modifier
                             .fillMaxSize()
@@ -238,6 +247,7 @@ fun ListMyCarsScreen(navController: NavHostController) {
     }
 }
 
+/*Ventana que se abre al publicar un coche*/
 @Composable
 fun DialogWithImage(
     viewModel: ListMyCarsViewModel,
@@ -259,65 +269,79 @@ fun DialogWithImage(
             .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            AsyncImage(
-                model = actualCar.image[0],
-                contentDescription = "Car Image",
-                contentScale = ContentScale.Fit,
+        if (!viewModel.isLoadPublished.value!!) {
+            Column(
                 modifier = Modifier
-                    .height(160.dp)
-            )
-            Text(
-                text = "${actualCar.model}",
-                modifier = Modifier.padding(16.dp),
-            )
-            Column() {
-                Row(
-                    Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Price per Day: ")
-                    PrecioTextField(
-                        value = precio,
-                        onValueChange = { nuevoPrecio ->
-                            precio = nuevoPrecio
-                            viewModel.updatePrice(nuevoPrecio)
-                        }
-                    )
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
 
-                }
-
-                TextButton(onClick = { onShowDatePicker(true) }) {
-                    Text(text = "Select Dates")
-                }
-                Text(selectStartDay + " " + selectEndDay)
-
-                Row(
+                AsyncImage(
+                    model = actualCar.image[0],
+                    contentDescription = "Car Image",
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
+                        .height(160.dp)
+                )
+                Text(
+                    text = "${actualCar.model}",
+                    modifier = Modifier.padding(16.dp),
+                )
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    TextButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.padding(8.dp),
+                    Row(
+                        Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Cancel")
+                        Text("Price per Day: ")
+                        PrecioTextField(
+                            value = precio,
+                            onValueChange = { nuevoPrecio ->
+                                precio = nuevoPrecio
+                                viewModel.updatePrice(nuevoPrecio)
+                            }
+                        )
+
                     }
 
-                    TextButton(
-                        onClick = { onConfirmation(item.keys.toString()) },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text("Publish")
+                    Row {
+
+                        TextButton(onClick = { onShowDatePicker(true) }) {
+                            Text(text = "Select Dates")
+                        }
+                        Text(selectStartDay + " " + selectEndDay)
                     }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        TextButton(
+                            onClick = { onDismissRequest() },
+                            modifier = Modifier.padding(8.dp),
+                        ) {
+                            Text("Cancel")
+                        }
+
+                        TextButton(
+                            onClick = {
+                                onConfirmation(item.keys.toString())
+                            },
+                            modifier = Modifier.padding(8.dp),
+                        ) {
+                            Text("Publish")
+                        }
+                    }
+
                 }
-
             }
+
+        } else {
+            LoadScreen()
         }
     }
 }
@@ -329,8 +353,6 @@ fun previewCardsList(
     viewModel: ListMyCarsViewModel,
     navController: NavHostController,
     onShowDialog: (Boolean, HashMap<String, Car>) -> Unit, // Función para actualizar el estado
-
-
 ) {
     val menuExpanded = remember { mutableStateOf(false) }
 
@@ -341,20 +363,18 @@ fun previewCardsList(
         },
         leadingContent = {
             item.value.image.firstOrNull()?.let { imageUrl ->
-                val imagePainter = rememberAsyncImagePainter(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .crossfade(true)
-                        .build(),
-                )
-                Box(
-                    modifier = Modifier.size(100.dp),
-                ) {
 
-                    Image(
-                        painter = imagePainter,
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .fillMaxWidth(),
+                ) {
+                    AsyncImage(
+                        model = imageUrl,
                         contentDescription = "Car Image",
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .height(160.dp)
                     )
                 }
             }
@@ -376,6 +396,20 @@ fun previewCardsList(
                 expanded = menuExpanded.value,
                 onDismissRequest = { menuExpanded.value = false }
             ) {
+                if (item.value.rentCars.isNotEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Ver Publicación") },
+                        onClick = {
+                            navController.navigate(AppScreens.RentCarScreen.route + "/${item.key}")
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Outlined.Search,
+                                contentDescription = null
+                            )
+                        })
+
+                }
                 DropdownMenuItem(
                     text = { Text("Publicar") },
                     onClick = {

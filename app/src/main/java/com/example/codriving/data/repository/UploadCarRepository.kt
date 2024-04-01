@@ -9,7 +9,6 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import java.sql.Timestamp
 import java.util.Date
 import javax.inject.Inject
 
@@ -108,7 +107,7 @@ class UploadCarRepository @Inject constructor(
                             carDocument.get("rentCars") as? List<DocumentReference?> ?: emptyList()
 
                         // Crear el objeto Car y agregarlo al mapa
-                        val car = Car(id, plate, brand, model, year, kilometers, image, emptyList())
+                        val car = Car(id, plate, brand, model, year, kilometers, image, rentCarsRefs)
                         carMap[id] = car
                     } else {
                         // El documento del coche no existe o es null
@@ -170,13 +169,36 @@ class UploadCarRepository @Inject constructor(
 
     }
 
+    suspend fun getRentsByCar(listDocument: List<DocumentReference?>): MutableList<RentCars> {
+
+        val rentCarsList = mutableListOf<RentCars>()
+
+            for (rentCarRef in listDocument) {
+                val rentCarDocument = rentCarRef!!.get().await()
+                val rentCar = RentCars(
+                    carId = rentCarDocument["carId"] as DocumentReference,
+                    ownerName = rentCarDocument["ownerName"] as String,
+                    pricePerDay = rentCarDocument["pricePerDay"] as Double,
+                    startDate = rentCarDocument["startDate"] as com.google.firebase.Timestamp,
+                    rating = rentCarDocument["rating"] as Double? ?: 0.0,
+                    endDate = rentCarDocument["endDate"] as com.google.firebase.Timestamp
+                )
+                rentCarsList.add(rentCar)
+            }
+
+
+        return rentCarsList
+
+
+    }
+
     suspend fun publishRentCar(carIdwithBrackets: String, start: Date, end: Date, price: String) {
         try {
 
             val carId = carIdwithBrackets.replace(Regex("\\[(.*?)\\]"), "$1")
 
-            val startStamp = Timestamp(start.time)
-            val endStamp = Timestamp(end.time)
+            val startStamp = com.google.firebase.Timestamp(start)
+            val endStamp = com.google.firebase.Timestamp(end)
 
             val userDoc = firestore.collection("Users").document(curretUserId).get().await()
             val ownerName = userDoc.getString("fullName") ?: ""

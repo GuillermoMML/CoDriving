@@ -3,7 +3,6 @@ package com.example.codriving.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -36,15 +35,14 @@ fun AppNavigation(
         composable(
             route = AppScreens.RentCarScreen.route + "/{idRentCar}",
             arguments = listOf(navArgument(name = "idRentCar") {
-                type = NavType.IntType
+                type = NavType.StringType
             })
         ) { backStackEntry ->
-            val rentCarViewModel: RentCarViewModel = viewModel() // Access ViewModel
-
+            val rentCarViewModel: RentCarViewModel = hiltViewModel() // Access ViewModel
             RentCarScreen(
                 navController,
                 rentCarViewModel,
-                backStackEntry.arguments?.getInt("idRentCar"),
+                backStackEntry.arguments?.getString("idRentCar"),
             )
         }
         composable(route = AppScreens.LoginScreen.route) {
@@ -59,21 +57,21 @@ fun AppNavigation(
         composable(
             AppScreens.CarsFormScreen.route + "/{carId}",
             arguments = listOf(navArgument("carId") { type = NavType.StringType; nullable = true })
-        ) {navBackStackEntry ->
-            val viewModel : CarsFormViewModel = hiltViewModel()
+        ) { navBackStackEntry ->
+            val viewModel: CarsFormViewModel = hiltViewModel()
             val carId = navBackStackEntry.arguments?.getString("carId")
             LaunchedEffect(carId) {
                 carId?.let {
                     viewModel.loadCarDetails(carId)
                 }
             }
-            CarsFormScreen(navController = navController,viewModel)
+            CarsFormScreen(navController = navController, viewModel)
 
         }
 
 
 
-        composable(AppScreens.CarsFormScreen.route,) {
+        composable(AppScreens.CarsFormScreen.route) {
             CarsFormScreen(navController = navController)
         }
 

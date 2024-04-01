@@ -16,9 +16,12 @@ import javax.inject.Inject
 @HiltViewModel
 class ListMyCarsViewModel @Inject constructor(private val uploadCarRepository: UploadCarRepository
 ) : ViewModel() {
-    private val _carListState = MutableStateFlow<Map<String, Car>>(emptyMap())
+    private var _carListState = MutableStateFlow<Map<String, Car>>(emptyMap())
     val carListState: StateFlow<Map<String, Car>> = _carListState
-    private val _price = MutableLiveData<String>()
+
+    private val _price = MutableLiveData("")
+    val price: LiveData<String> get() = _price
+
     private val _startDay = MutableStateFlow(Date())
 
     private val _endDay = MutableStateFlow(Date())
@@ -27,12 +30,17 @@ class ListMyCarsViewModel @Inject constructor(private val uploadCarRepository: U
     private val _isLoaded = MutableLiveData(false)
     val isLoaded: LiveData<Boolean> get() = _isLoaded
 
+    private val _isLoadPublished = MutableLiveData(false)
+    val isLoadPublished: LiveData<Boolean> get() = _isLoadPublished
+
+
     init {
         viewModelScope.launch {
             _carListState.value = uploadCarRepository.getCurretCars()
             _isLoaded.value = true
         }
     }
+
     suspend fun removeCarFromList(id: String) {
         uploadCarRepository.deleteCar(id)
         _carListState.value = uploadCarRepository.getCurretCars()
@@ -52,11 +60,17 @@ class ListMyCarsViewModel @Inject constructor(private val uploadCarRepository: U
     }
 
     suspend fun verifyPublishFields(idCar: String): Boolean {
-        if(_startDay.value.equals(null) || _endDay.value.equals(null) || _price.value.equals("")){
+
+        if(_startDay.value.equals(null) || _endDay.value.equals(null) || _price.value == ""){
             return false
         }else{
+            _isLoadPublished.value = true
             uploadCarRepository.publishRentCar(idCar,_startDay.value,_endDay.value,_price.value!!)
+            _carListState.value = uploadCarRepository.getCurretCars()
+            _price.value = ""
+
         }
+        _isLoadPublished.value = false
         return true
     }
 }
