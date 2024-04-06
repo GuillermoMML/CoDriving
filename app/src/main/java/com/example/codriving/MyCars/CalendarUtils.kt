@@ -1,24 +1,37 @@
 package com.example.codriving.MyCars
 
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material3.Button
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DateRangePickerState
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.Calendar
 
 @Composable
@@ -90,7 +103,8 @@ fun DateRangePickerSample(
         },
         showModeToggle = true,
         colors = DatePickerDefaults.colors(
-            containerColor = Color.Blue,
+            dayContentColor = Color.Black,
+            containerColor = Color.Black,
             titleContentColor = Color.Black,
             headlineContentColor = Color.Black,
             weekdayContentColor = Color.Black,
@@ -114,5 +128,64 @@ fun getFormattedDate(timeInMillis: Long): String {
     return dateFormat.format(calender.timeInMillis)
 }
 
+fun getFormattedDateNoYear(timeInMillis: Long): String {
+    val calender = Calendar.getInstance()
+    calender.timeInMillis = timeInMillis
+    val dateFormat = SimpleDateFormat("dd/MM")
+    return dateFormat.format(calender.timeInMillis)
+}
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@Composable
+fun contentModalSheet(bottomSheetState: ModalBottomSheetState,onConfirmation: (Long,Long) -> Unit,content: @Composable () -> Unit,) {
+    val coroutineScope = rememberCoroutineScope()
+    val state = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = Instant.now().toEpochMilli(),
+        initialSelectedEndDateMillis = OffsetDateTime.now().plusDays(8).toInstant().toEpochMilli(),
+        yearRange = IntRange(2023,2024), // available years
+        initialDisplayMode = DisplayMode.Picker,
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                return utcTimeMillis > System.currentTimeMillis()
+            }
+        }
+    )
+    ModalBottomSheetLayout(
+        sheetState = bottomSheetState,
+        sheetContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Transparent)
+            ) {
+
+                DateRangePickerSample(state)
+
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            bottomSheetState.hide()
+                        }
+
+
+                        val startDate = state.selectedStartDateMillis ?: Instant.now().toEpochMilli()
+                        val endDate = state.selectedEndDateMillis ?: startDate
+                        onConfirmation(startDate, endDate)
+
+
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp)
+                ) {
+                    Text("Done", color = Color.White)
+                }
+            }
+
+        }
+    ){
+        content()
+    }
+
+}
 

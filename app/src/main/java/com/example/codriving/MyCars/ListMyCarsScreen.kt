@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -24,7 +23,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -110,47 +108,13 @@ fun ListMyCarsScreen(navController: NavHostController) {
     }
 
     if (isLoaded.value!!) {
-
-        ModalBottomSheetLayout(
-
-            sheetState = bottomSheetState,
-            sheetContent = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.Transparent)
-                ) {
-
-                    DateRangePickerSample(state)
-
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                bottomSheetState.hide()
-                            }
-                            if (state.selectedStartDateMillis != null) {
-                                selectStartDay = getFormattedDate(state.selectedStartDateMillis!!)
-                                val startDate = Date(state.selectedStartDateMillis!!)
-
-                                viewModel.setStartDay(startDate)
-                            }
-                            if (state.selectedEndDateMillis != null) {
-                                selectEndDay = getFormattedDate(state.selectedEndDateMillis!!)
-                                val endDay = Date(state.selectedEndDateMillis!!)
-
-                                viewModel.setEndDay(endDay)
-
-                            }
-
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(end = 16.dp)
-                    ) {
-                        Text("Done", color = Color.White)
-                    }
-                }
+        contentModalSheet(
+            bottomSheetState = bottomSheetState,
+            onConfirmation = { startDay, endDay ->
+                viewModel.setStartDay(Date(startDay))
+                viewModel.setEndDay(Date(endDay))
             }) {
+
             if (showModal) {
 
                 if (currentCar.isNotEmpty()) {
@@ -159,12 +123,9 @@ fun ListMyCarsScreen(navController: NavHostController) {
                             .fillMaxSize()
                             .zIndex(1F)
                             .background(Color.Black.copy(alpha = 0.6f)),
-                        contentAlignment = Alignment.Center
                     ) {
                         DialogWithImage(viewModel,
                             item = currentCar,
-                            selectStartDay = selectStartDay,
-                            selectEndDay = selectEndDay,
                             onDismissRequest = { showModal = false },
                             onConfirmation = {
                                 coroutineScope.launch {
@@ -251,14 +212,14 @@ fun ListMyCarsScreen(navController: NavHostController) {
 @Composable
 fun DialogWithImage(
     viewModel: ListMyCarsViewModel,
-    selectStartDay: String,
-    selectEndDay: String,
     item: HashMap<String, Car>,
     onDismissRequest: () -> Unit,
     onConfirmation: (String) -> Unit,
     onShowDatePicker: (Boolean) -> Unit,
 ) {
     var precio by remember { mutableStateOf("") }
+    val startDay = viewModel.startDay.collectAsState()
+    val endDay = viewModel.endDay.collectAsState()
 
     var actualCar = item.values.first()
     // Draw a rectangle shape with rounded corners inside the dialog
@@ -307,12 +268,20 @@ fun DialogWithImage(
 
                     }
 
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
 
                         TextButton(onClick = { onShowDatePicker(true) }) {
                             Text(text = "Select Dates")
                         }
-                        Text(selectStartDay + " " + selectEndDay)
+                        if (startDay.value != null && endDay.value != null) {
+                            Text(
+                                "${getFormattedDateNoYear(startDay.value.time)}-${
+                                    getFormattedDateNoYear(
+                                        endDay.value.time
+                                    )
+                                }"
+                            )
+                        }
                     }
 
                     Row(
@@ -365,16 +334,12 @@ fun previewCardsList(
             item.value.image.firstOrNull()?.let { imageUrl ->
 
                 Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .fillMaxWidth(),
                 ) {
                     AsyncImage(
                         model = imageUrl,
                         contentDescription = "Car Image",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .height(160.dp)
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(135.dp)
                     )
                 }
             }

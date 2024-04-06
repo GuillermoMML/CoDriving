@@ -2,20 +2,18 @@ package com.example.codriving.UploadRentals
 
 import androidx.annotation.ColorRes
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -23,9 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -35,17 +31,17 @@ import com.example.codriving.R
 
 @Composable
 fun UploadRents() {
-    val typesOfUse = listOf(stringResource(id = R.string.newCar),stringResource(id = R.string.halfNew),
-        stringResource(id = R.string.almostUsed), stringResource(id = R.string.tooMuchUsed))
+    val typesOfUse = listOf("Pick-Up","Date", "Drop-off")
     val defaultSelectedItemIndex = 0
     val selectedIndex = remember { mutableStateOf(defaultSelectedItemIndex) }
 
     Box(Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center)
     {
-        SegmentedControl(items = typesOfUse , selectedIndex =selectedIndex ){
-        }
-        Column(Modifier.fillMaxWidth()) {
+        SegmentedControl(items = typesOfUse , selectedIndex =selectedIndex, startTime = null, dateRange = null, endTime = null ){
+            if(it==0){
+
+            }
         }
     }
 }
@@ -67,18 +63,19 @@ fun PreviewUploadRents() {
  */
 @Composable
 fun SegmentedControl(
+    startTime: String?,
+    dateRange: String?,
+    endTime: String?,
     items: List<String>,
     useFixedWidth: Boolean = false,
-    itemWidth: Dp = 120.dp,
+    itemWidth: Dp = 200.dp,
     cornerRadius : Int = 10,
     selectedIndex:MutableState<Int>,
     @ColorRes color : Int = R.color.BackGround,
     onItemSelection: (selectedItemIndex: Int) -> Unit
 ) {
 
-    Row(
-        modifier = Modifier
-    ) {
+    Row(Modifier.padding(5.dp)) {
         items.forEachIndexed { index, item ->
             OutlinedButton(
                 modifier = when (index) {
@@ -129,6 +126,7 @@ fun SegmentedControl(
                         bottomStartPercent = 0,
                         bottomEndPercent = cornerRadius
                     )
+
                     /**
                      * middle button
                      */
@@ -162,15 +160,25 @@ fun SegmentedControl(
                     ButtonDefaults.outlinedButtonColors(backgroundColor = Color.Transparent)
                 },
             ) {
-                Text(
-                    text = item,
-                    fontWeight = FontWeight.Normal,
-                    color = if (selectedIndex.value == index) {
-                        Color.White
-                    } else {
-                        colorResource(id = color).copy(alpha = 0.9f)
-                    },
-                )
+                Column {
+                    Text(
+                        text = item,
+                        fontWeight = FontWeight.Normal,
+                        color = if (selectedIndex.value == index) {
+                            Color.White
+                        } else {
+                            colorResource(id = color).copy(alpha = 0.9f)
+                        },
+                    )
+                        Text(text = when(index){
+                            0 -> startTime ?: "No selected"
+                            1 -> dateRange ?: "No selected"
+                            2 -> endTime ?: "No selected"
+                            else -> ""
+                        }
+                        )
+
+                }
             }
         }
     }

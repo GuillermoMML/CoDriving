@@ -7,6 +7,5 @@ data class RentCars(
     val ownerName: String,
     val pricePerDay: Double,
     val startDate: com.google.firebase.Timestamp,
-    val rating: Double = 0.0,
     val endDate: com.google.firebase.Timestamp
 )

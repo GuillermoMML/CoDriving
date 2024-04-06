@@ -7,9 +7,10 @@ data class Car(
     val plate: String,
     val brand: String,
     val model: String,
-    val year: String,
+    var year: String,
     val kilometers: Int,
     val image: List<String>,
+    val rating: Double? = 0.0,
     val rentCars: List<DocumentReference?> // Campo de referencia a las RentCars
 ){
 }

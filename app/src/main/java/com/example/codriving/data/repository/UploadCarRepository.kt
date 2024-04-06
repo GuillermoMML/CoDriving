@@ -100,6 +100,8 @@ class UploadCarRepository @Inject constructor(
                         val model = carDocument.getString("model") ?: ""
                         val year = carDocument.getString("year") ?: ""
                         val kilometers = carDocument.getLong("kilometers")?.toInt() ?: 0
+                        val rating = carDocument.getLong("rating") ?.toDouble()?: 0.0
+
                         val image = carDocument.get("image") as? List<String> ?: emptyList()
 
                         // Obtener las referencias de las rentas asociadas al coche
@@ -107,7 +109,7 @@ class UploadCarRepository @Inject constructor(
                             carDocument.get("rentCars") as? List<DocumentReference?> ?: emptyList()
 
                         // Crear el objeto Car y agregarlo al mapa
-                        val car = Car(id, plate, brand, model, year, kilometers, image, rentCarsRefs)
+                        val car = Car(id, plate, brand, model, year, kilometers, image,rating,rentCarsRefs)
                         carMap[id] = car
                     } else {
                         // El documento del coche no existe o es null
@@ -152,11 +154,12 @@ class UploadCarRepository @Inject constructor(
         val year = carDocument.getString("year") ?: ""
         val kilometers = carDocument.getLong("kilometers")?.toInt() ?: 0
         val image = carDocument.get("image") as? List<String> ?: emptyList()
+        val rating = carDocument.getLong("rating") ?.toDouble()?: 0.0
 
         // Obtener las referencias de las rentas asociadas al coche
         val rentCarsRefs = carDocument.get("rentCars") as? List<DocumentReference?> ?: emptyList()
 
-        return Car(id, plate, brand, model, year, kilometers, image, rentCarsRefs)
+        return Car(id, plate, brand, model, year, kilometers, image,rating, rentCarsRefs)
     }
 
     fun getTopRatedCars(): LiveData<List<Car>> {
@@ -180,7 +183,6 @@ class UploadCarRepository @Inject constructor(
                     ownerName = rentCarDocument["ownerName"] as String,
                     pricePerDay = rentCarDocument["pricePerDay"] as Double,
                     startDate = rentCarDocument["startDate"] as com.google.firebase.Timestamp,
-                    rating = rentCarDocument["rating"] as Double? ?: 0.0,
                     endDate = rentCarDocument["endDate"] as com.google.firebase.Timestamp
                 )
                 rentCarsList.add(rentCar)
@@ -210,7 +212,6 @@ class UploadCarRepository @Inject constructor(
                 carId = carRef, // Assign the DocumentReference directly
                 endDate = endStamp,
                 startDate = startStamp,
-                rating = 0.0,
                 ownerName = ownerName,
                 pricePerDay = price.toDouble()
             )
@@ -238,6 +239,11 @@ class UploadCarRepository @Inject constructor(
         } catch (e: Exception) {
             throw UserRepositoryException("Error al crear el usuario: ${e.message}", e)
         }
+    }
+
+    suspend fun getCarPrice(rentRef:DocumentReference): String {
+        val rentCarDocument = rentRef!!.get().await()
+        return rentCarDocument["pricePerDay"] as String
     }
 }
 

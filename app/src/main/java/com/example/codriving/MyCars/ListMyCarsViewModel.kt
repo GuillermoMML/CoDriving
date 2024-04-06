@@ -23,6 +23,8 @@ class ListMyCarsViewModel @Inject constructor(private val uploadCarRepository: U
     val price: LiveData<String> get() = _price
 
     private val _startDay = MutableStateFlow(Date())
+    val startDay:StateFlow<Date> get() =_startDay
+    val endDay:StateFlow<Date> get() =_endDay
 
     private val _endDay = MutableStateFlow(Date())
 

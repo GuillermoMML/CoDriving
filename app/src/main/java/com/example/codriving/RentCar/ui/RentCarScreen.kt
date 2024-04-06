@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -45,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.example.codriving.MyCars.LoadScreen
 import com.example.codriving.R
 import com.example.codriving.data.Car
 import com.example.codriving.data.RentCars
@@ -83,18 +83,7 @@ fun RentCarScreen(
     if (isLoading == false) {
 
         // Show loading indicator here
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(100.dp)
-                .size(200.dp)
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .align(Alignment.CenterEnd)
-            )
-        }
+        LoadScreen()
     } else {
         // Display content based on "rentCar"
         // ... your content composables
@@ -142,7 +131,7 @@ fun RentCarScreen(
                         .fillMaxSize()
                 ) {
                    rentCar?.let { CarouselCard(it) } //POner algo en caso de que falle
-                   listOfRents?.let { it.value?.let { it1 -> bodyRest(it1) } }
+                   listOfRents?.let { it.value?.let { it1 -> bodyRest(it1,rentCar!!.rating) } }
                 }
 
 
@@ -180,9 +169,8 @@ fun RatingBar(
 }
 
 @Composable
-fun bodyRest(rentCars: List<RentCars>) {
+fun bodyRest(rentCars: List<RentCars>, rating: Double?) {
     val ownerName = rentCars[0].ownerName
-    val rating = rentCars[0].rating
     Column(Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -268,7 +256,7 @@ fun bodyRest(rentCars: List<RentCars>) {
                     fontWeight = FontWeight.ExtraBold
                 )
 
-                RatingBar(rating)
+                RatingBar(rating!!)
                 Text(text = "Total Reviews HERE")
             }
             Column(
