@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
-import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -119,9 +118,7 @@ class CarsFormViewModel @Inject constructor(private val uploadCarRepository: Upl
                     // Procesa la URL de descarga de la imagen si es necesario
                     uploadedImageUrls.add(downloadUri.toString())
                 }
-                val id = UUID.randomUUID().toString() // Generar un identificador único
                 val newCar = Car(
-                    id = id,
                     plate = _plate.value!!,
                     brand = _selectMarca.value!!,
                     image = uploadedImageUrls,

@@ -8,6 +8,7 @@ import com.example.codriving.data.RentCars
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 import javax.inject.Inject
@@ -100,7 +101,7 @@ class UploadCarRepository @Inject constructor(
                         val model = carDocument.getString("model") ?: ""
                         val year = carDocument.getString("year") ?: ""
                         val kilometers = carDocument.getLong("kilometers")?.toInt() ?: 0
-                        val rating = carDocument.getLong("rating") ?.toDouble()?: 0.0
+                        val rating = carDocument.getLong("rating")?.toDouble() ?: 0.0
 
                         val image = carDocument.get("image") as? List<String> ?: emptyList()
 
@@ -109,7 +110,17 @@ class UploadCarRepository @Inject constructor(
                             carDocument.get("rentCars") as? List<DocumentReference?> ?: emptyList()
 
                         // Crear el objeto Car y agregarlo al mapa
-                        val car = Car(id, plate, brand, model, year, kilometers, image,rating,rentCarsRefs)
+                        val car = Car(
+                            id,
+                            plate,
+                            brand,
+                            model,
+                            year,
+                            kilometers,
+                            image,
+                            rating,
+                            rentCarsRefs
+                        )
                         carMap[id] = car
                     } else {
                         // El documento del coche no existe o es null
@@ -154,18 +165,30 @@ class UploadCarRepository @Inject constructor(
         val year = carDocument.getString("year") ?: ""
         val kilometers = carDocument.getLong("kilometers")?.toInt() ?: 0
         val image = carDocument.get("image") as? List<String> ?: emptyList()
-        val rating = carDocument.getLong("rating") ?.toDouble()?: 0.0
+        val rating = carDocument.getLong("rating")?.toDouble() ?: 0.0
 
         // Obtener las referencias de las rentas asociadas al coche
         val rentCarsRefs = carDocument.get("rentCars") as? List<DocumentReference?> ?: emptyList()
 
-        return Car(id, plate, brand, model, year, kilometers, image,rating, rentCarsRefs)
+        return Car(id, plate, brand, model, year, kilometers, image, rating, rentCarsRefs)
     }
 
-    fun getTopRatedCars(): LiveData<List<Car>> {
-        return MutableLiveData<List<Car>>()
+
+    suspend fun getMostRatingCars(): List<Car> {
+        val carsRef = firestore.collection("Cars")
+
+        val querySnapshot = carsRef.orderBy("rating", Query.Direction.DESCENDING)
+            .limit(5) // Obtener los 5 mejores coches
+            .get()
+            .await()
+
+
+        return querySnapshot.documents.map { document ->
+            document.toObject(Car::class.java) ?: throw IllegalStateException("Invalid data")
+        }
 
     }
+
 
     fun getCarsByBrand(): LiveData<Map<String, List<Car>>> {
         return MutableLiveData<Map<String, List<Car>>>()
@@ -176,17 +199,17 @@ class UploadCarRepository @Inject constructor(
 
         val rentCarsList = mutableListOf<RentCars>()
 
-            for (rentCarRef in listDocument) {
-                val rentCarDocument = rentCarRef!!.get().await()
-                val rentCar = RentCars(
-                    carId = rentCarDocument["carId"] as DocumentReference,
-                    ownerName = rentCarDocument["ownerName"] as String,
-                    pricePerDay = rentCarDocument["pricePerDay"] as Double,
-                    startDate = rentCarDocument["startDate"] as com.google.firebase.Timestamp,
-                    endDate = rentCarDocument["endDate"] as com.google.firebase.Timestamp
-                )
-                rentCarsList.add(rentCar)
-            }
+        for (rentCarRef in listDocument) {
+            val rentCarDocument = rentCarRef!!.get().await()
+            val rentCar = RentCars(
+                carId = rentCarDocument["carId"] as DocumentReference,
+                ownerName = rentCarDocument["ownerName"] as String,
+                pricePerDay = rentCarDocument["pricePerDay"] as Double,
+                startDate = rentCarDocument["startDate"] as com.google.firebase.Timestamp,
+                endDate = rentCarDocument["endDate"] as com.google.firebase.Timestamp
+            )
+            rentCarsList.add(rentCar)
+        }
 
 
         return rentCarsList
@@ -206,7 +229,8 @@ class UploadCarRepository @Inject constructor(
             val ownerName = userDoc.getString("fullName") ?: ""
 
             // Get the car reference directly
-            val carRef = firestore.collection("Cars").document(carId) // Double-check collection name
+            val carRef =
+                firestore.collection("Cars").document(carId) // Double-check collection name
 
             val rentClass = RentCars(
                 carId = carRef, // Assign the DocumentReference directly
@@ -222,13 +246,17 @@ class UploadCarRepository @Inject constructor(
             carRef.get().addOnSuccessListener { carSnapshot ->
                 if (carSnapshot.exists()) {
                     // Proceed with updating the rentCars array
-                    val existingRentCars = carSnapshot.get("rentCars") as? List<DocumentReference> ?: emptyList()
+                    val existingRentCars =
+                        carSnapshot.get("rentCars") as? List<DocumentReference> ?: emptyList()
                     val updatedRentCars = existingRentCars + rentDocRef
 
                     carRef.update("rentCars", updatedRentCars)
                 } else {
                     // Handle the case where the "Cars" collection or document doesn't exist
-                    Log.w("Firestore", "Car document not found: $carId") // Or show an error message to the user
+                    Log.w(
+                        "Firestore",
+                        "Car document not found: $carId"
+                    ) // Or show an error message to the user
                 }
             }
                 .addOnFailureListener { exception ->
@@ -241,7 +269,7 @@ class UploadCarRepository @Inject constructor(
         }
     }
 
-    suspend fun getCarPrice(rentRef:DocumentReference): String {
+    suspend fun getCarPrice(rentRef: DocumentReference): String {
         val rentCarDocument = rentRef!!.get().await()
         return rentCarDocument["pricePerDay"] as String
     }

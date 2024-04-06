@@ -1,12 +1,15 @@
 package com.example.codriving.Homepage.ui.home
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.codriving.data.Car
 import com.example.codriving.data.repository.UploadCarRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.OffsetDateTime
 import java.util.Date
@@ -25,10 +28,17 @@ class HomeViewModel @Inject constructor(private val carRepository: UploadCarRepo
     private val _endHour = MutableStateFlow("00:00")
     val endHour: StateFlow<String> get() = _endHour
 
+    private val _mostRated = MutableLiveData<List<Car>>()
+    val mostRated: LiveData<List<Car>> get() = _mostRated
     //Encargarse  de la logica de cargar datos (poner maximo y al alcanzar pedir a la base de datos más)
 
-    fun getTopRatedCars(): LiveData<List<Car>> {
-      return carRepository.getTopRatedCars()
+    init{
+        viewModelScope.launch {
+            _mostRated.value = getTopRatedCars()
+        }
+    }
+    suspend fun getTopRatedCars(): List<Car> {
+      return carRepository.getMostRatingCars()
     }
     fun setStartDay(day: Long){
         _selectedStartDay.value = day

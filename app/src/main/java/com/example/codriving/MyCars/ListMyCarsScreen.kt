@@ -38,7 +38,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -73,7 +72,6 @@ fun ListMyCarsScreen(navController: NavHostController) {
     val listMyCarsState = viewModel.carListState.collectAsState()
     val isLoaded = viewModel.isLoaded.observeAsState()
     val listState = rememberLazyListState()
-    val state = rememberDateRangePickerState()
     val coroutineScope = rememberCoroutineScope()
     val bottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -221,7 +219,7 @@ fun DialogWithImage(
     val startDay = viewModel.startDay.collectAsState()
     val endDay = viewModel.endDay.collectAsState()
 
-    var actualCar = item.values.first()
+    val actualCar = item.values.first()
     // Draw a rectangle shape with rounded corners inside the dialog
     Card(
         modifier = Modifier
@@ -246,7 +244,7 @@ fun DialogWithImage(
                         .height(160.dp)
                 )
                 Text(
-                    text = "${actualCar.model}",
+                    text = actualCar.model,
                     modifier = Modifier.padding(16.dp),
                 )
                 Column(
@@ -273,7 +271,7 @@ fun DialogWithImage(
                         TextButton(onClick = { onShowDatePicker(true) }) {
                             Text(text = "Select Dates")
                         }
-                        if (startDay.value != null && endDay.value != null) {
+                        if (endDay.value != null) {
                             Text(
                                 "${getFormattedDateNoYear(startDay.value.time)}-${
                                     getFormattedDateNoYear(
@@ -326,7 +324,7 @@ fun previewCardsList(
     val menuExpanded = remember { mutableStateOf(false) }
 
     ListItem(
-        headlineContent = { Text("${item.value.model}") },
+        headlineContent = { Text(item.value.model) },
         supportingContent = {
             Text("Kilometers: ${item.value.kilometers}\nPlate: ${item.value.plate}\nModel year: ${item.value.year}")
         },

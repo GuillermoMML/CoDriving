@@ -4,6 +4,7 @@ package com.example.codriving.Homepage.ui.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,9 +43,9 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -63,12 +65,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.codriving.Homepage.ui.home.navigationBar.navigationBar
+import com.example.codriving.MyCars.LoadScreen
 import com.example.codriving.MyCars.contentModalSheet
 import com.example.codriving.MyCars.getFormattedDateNoYear
 import com.example.codriving.R
 import com.example.codriving.UploadRentals.SegmentedControl
 import com.example.codriving.data.Car
-import com.example.codriving.data.RentCars
 import com.example.codriving.navigation.AppScreens
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -217,8 +219,9 @@ fun HomePage(
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val viewModel: HomeViewModel = hiltViewModel() // Injected in the composable
     val coroutineScope = rememberCoroutineScope()
-    val topRatedCars: MutableList<Car> = mutableListOf()
+    val topRatedCars = viewModel.mostRated.observeAsState()
     val TopAppBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
     contentModalSheet(bottomSheetState = bottomSheetState, onConfirmation = { startDay, endDay ->
         viewModel.setStartDay(startDay)
         viewModel.setEndDay(endDay)
@@ -245,7 +248,12 @@ fun HomePage(
                         }
 
                     }
-                    //CarruselTopCars()
+                    if (topRatedCars.value.isNullOrEmpty()) {
+                        LoadScreen()
+                    } else {
+                        Text(text = "Featured Cars")
+                        CarruselTopCars(topRatedCars = topRatedCars.value!!)
+                    }
 
                 }
             }
@@ -256,59 +264,53 @@ fun HomePage(
 }
 
 @Composable
-fun CarruselTopCars(topRatedCars: State<List<Car>?>) {
-
-    var cars by remember { mutableStateOf(listOf<Car>()) }
-
-    LaunchedEffect(key1 = topRatedCars) {
-        val result = topRatedCars.value
-        if (result != null) {
-            cars = result // Update the entire list
-        }
-    }
+fun CarruselTopCars(topRatedCars: List<Car>) {
+    val aspectRatio = 16f / 9f
+    val heightInDp = 150f
+    val widthInDp = heightInDp * aspectRatio
 
     LazyRow(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Red)
-            .height(200.dp),
-
-    contentPadding = PaddingValues(16.dp),
-
+            .fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        cars.forEach(){Car->
-            item{
-                Card(
-                    modifier = Modifier.width(200.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    elevation = CardDefaults.cardElevation(hoveredElevation = 10.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(8.dp)
+        topRatedCars.forEach() { Car ->
+
+            item {
+
+                Column {
+                    Card(
+
+                        shape = RoundedCornerShape(8.dp),
+                        elevation = CardDefaults.cardElevation(hoveredElevation = 10.dp),
+                        modifier = Modifier
+                            .background(Color.Transparent)
+                            .size(width = widthInDp.toInt().dp, height = 150.dp)
+
                     ) {
                         AsyncImage(
                             model = Car.image[0],
                             contentDescription = Car.model,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(150.dp)
-                        )
-                        Text(
-                            text = Car.model,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
+                            contentScale = ContentScale.Crop,
                         )
                     }
+                    Text(
+                        text = Car.model,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "Kilometers " + Car.kilometers,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-
             }
-
         }
-
     }
 }
-
 
 @Composable
 fun SearchBar(viewModel: SearchViewModel, navController: NavController) {
@@ -342,8 +344,7 @@ fun SearchBar(viewModel: SearchViewModel, navController: NavController) {
                 }
             }
         )
-        if (isSearching) {
-        }
+
     }
 }
 
@@ -370,16 +371,5 @@ fun HeaderHome(scrollBehavior: TopAppBarScrollBehavior) {
 }
 
 
-@Composable
-fun CardFeaturedCars(
-    featuredCars: RentCars,
-    navController: NavController,
-) {
 
-}
-
-@Composable
-fun BottonBar() {
-
-}
 
