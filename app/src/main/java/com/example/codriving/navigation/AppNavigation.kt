@@ -9,29 +9,31 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.codriving.Homepage.ui.home.HomePage
-import com.example.codriving.LoginPage.ui.LoginScreen
-import com.example.codriving.LoginPage.ui.LoginViewModel
-import com.example.codriving.MyCars.CarsFormScreen
-import com.example.codriving.MyCars.CarsFormViewModel
-import com.example.codriving.MyCars.ListMyCarsScreen
-import com.example.codriving.RentCar.ui.RentCarScreen
-import com.example.codriving.RentCar.ui.RentCarViewModel
-import com.example.codriving.Searchpage.ui.viewSearch.SearchPage
-import com.example.codriving.SignUp.SignScreen
+import com.example.codriving.screens.BookRent.BookRentScreen
+import com.example.codriving.screens.BookRent.BookRentViewModel
+import com.example.codriving.screens.HomePage.HomePage
+import com.example.codriving.screens.LoginPage.ui.LoginScreen
+import com.example.codriving.screens.LoginPage.ui.LoginViewModel
+import com.example.codriving.screens.MyCars.CarsFormScreen
+import com.example.codriving.screens.MyCars.CarsFormViewModel
+import com.example.codriving.screens.MyCars.ListMyCarsScreen
+import com.example.codriving.screens.RentCar.RentCarScreen
+import com.example.codriving.screens.RentCar.RentCarViewModel
+import com.example.codriving.screens.SignUp.SignScreen
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun AppNavigation(
-    viewModel: LoginViewModel, navController: NavHostController = rememberNavController()
+fun AppNavigation (
+     navController: NavHostController = rememberNavController(), auth: FirebaseAuth
 ) {
+    val auth = FirebaseAuth.getInstance()
+
 
     NavHost(navController = navController, startDestination = AppScreens.LoginScreen.route) {
         composable(route = AppScreens.HomeScreen.route) {
             HomePage(navController)
         }
-        composable(route = AppScreens.SearchScreen.route) {
-            SearchPage(navController)
-        }
+
         composable(
             route = AppScreens.RentCarScreen.route + "/{idRentCar}",
             arguments = listOf(navArgument(name = "idRentCar") {
@@ -47,7 +49,23 @@ fun AppNavigation(
         }
         composable(route = AppScreens.LoginScreen.route) {
 
-            LoginScreen(navController, viewModel)
+
+            val loginViewModel: LoginViewModel = hiltViewModel()
+
+            LoginScreen(navController, loginViewModel) {
+
+                if (auth.currentUser != null) {
+                    navController.navigate(AppScreens.HomeScreen.route)
+                }
+
+                navController.navigate(AppScreens.HomeScreen.route) {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive =
+                            true
+                    }
+
+                }
+            }
         }
         composable(AppScreens.SignInScreen.route) {
 
@@ -58,14 +76,14 @@ fun AppNavigation(
             AppScreens.CarsFormScreen.route + "/{carId}",
             arguments = listOf(navArgument("carId") { type = NavType.StringType; nullable = true })
         ) { navBackStackEntry ->
-            val viewModel: CarsFormViewModel = hiltViewModel()
+            val CarsFormViewModel: CarsFormViewModel = hiltViewModel()
             val carId = navBackStackEntry.arguments?.getString("carId")
             LaunchedEffect(carId) {
                 carId?.let {
-                    viewModel.loadCarDetails(carId)
+                    CarsFormViewModel.loadCarDetails(carId)
                 }
             }
-            CarsFormScreen(navController = navController, viewModel)
+            CarsFormScreen(navController = navController, CarsFormViewModel)
 
         }
 
@@ -79,6 +97,26 @@ fun AppNavigation(
             ListMyCarsScreen(navController = navController)
         }
 
+        composable(AppScreens.ListMyCarsScreen.route) {
+            ListMyCarsScreen(navController = navController)
+        }
+
+        composable(
+            AppScreens.BookRentScreen.route + "/{rentCar}",
+            arguments = listOf(navArgument("rentCar") {
+                type = NavType.StringType; nullable = true
+            })
+        ) { navBackStackEntry ->
+            val BookRentViewModel: BookRentViewModel = hiltViewModel()
+            val carId = navBackStackEntry.arguments?.getString("rentCar")
+            LaunchedEffect(carId) {
+                carId?.let {
+                    BookRentViewModel.loadDetails(carId)
+                }
+            }
+            BookRentScreen(navController = navController, BookRentViewModel)
+
+        }
 
     }
 }

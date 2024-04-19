@@ -1,11 +1,12 @@
 package com.example.codriving.di
 
-import com.example.codriving.LoginPage.ui.LoginViewModel
 import com.example.codriving.data.repository.FirebaseAuthRepository
 import com.example.codriving.data.repository.FirebaseStorageRepository
 import com.example.codriving.data.repository.FirebaseStorageRepositoryImpl
+import com.example.codriving.data.repository.SearchRepository
 import com.example.codriving.data.repository.UploadCarRepository
 import com.example.codriving.data.repository.UserRepository
+import com.example.codriving.screens.LoginPage.ui.LoginViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
@@ -37,7 +38,12 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserRepository(firestore: FirebaseFirestore): UserRepository {
-        return UserRepository(firestore)
+        return UserRepository(firestore, provideAuthRepository(provideFirebaseAuth()))
+    }
+    @Provides
+    @Singleton
+    fun provideSearchRepository(firestore: FirebaseFirestore): SearchRepository {
+        return SearchRepository(firestore)
     }
     @Provides
     @Singleton
