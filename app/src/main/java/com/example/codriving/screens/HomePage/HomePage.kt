@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
@@ -65,10 +66,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.codriving.R
-import com.example.codriving.UploadRentals.SegmentedControl
 import com.example.codriving.common.contentModalSheet
 import com.example.codriving.common.getFormattedDateNoYear
-import com.example.codriving.data.Car
+import com.example.codriving.common.itemCarView
+import com.example.codriving.data.model.Car
 import com.example.codriving.navigation.AppScreens
 import com.example.codriving.screens.HomePage.navigationBar.navigationBar
 import com.example.codriving.screens.MyCars.LoadScreen
@@ -244,6 +245,8 @@ fun HomePage(
                     viewModel,
                     bottomSheetState,
                     onSearch = {
+                        isSearching = false
+
                         isSearching = true
                     },
                     onLogOut = {
@@ -258,16 +261,17 @@ fun HomePage(
             content = { paddingValues ->
                 Column(modifier = Modifier.padding(paddingValues)) {
                     if (!isSearching) {
-                        if (topRatedCars.value.isNullOrEmpty()) {
-                            LoadScreen()
-                        } else {
-                            Text(
-                                text = "Featured Cars",
-                                Modifier.padding(start = 10.dp),
-                                fontWeight = FontWeight.Bold
-                            )
-                            CarruselTopCars(topRatedCars = topRatedCars.value!!) {
-                                navController.navigate(AppScreens.RentCarScreen.route + "/${it}")
+                        LazyColumn(modifier = Modifier.padding(10.dp)) {
+                            topRatedCars.value?.let {
+                                it.forEach { (key, car) ->
+                                    item {
+                                        itemCarView(car = car) { click ->
+                                            if (click) navController.navigate(AppScreens.RentCarScreen.route + "/${key}")
+                                        }
+                                    }
+                                }
+                            } ?: item {
+                                LoadScreen()
                             }
                         }
                     } else {
@@ -277,8 +281,6 @@ fun HomePage(
                             goBack = { isSearching = false },
                             clickItem = { navController.navigate(AppScreens.RentCarScreen.route + "/${it}") },
                         )
-
-
                     }
                 }
             }
@@ -300,7 +302,7 @@ fun CarruselTopCars(topRatedCars: HashMap<String, Car>, onClickItem: (String) ->
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        topRatedCars.forEach() { Car ->
+        topRatedCars.forEach { Car ->
 
             item {
                 OutlinedCard(
@@ -408,8 +410,8 @@ fun HeaderHome(
         Row(
             Modifier
                 .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             Finder(
                 viewModel = viewModel,
@@ -431,6 +433,9 @@ fun HeaderHome(
     }
 
 }
+
+
+
 
 
 

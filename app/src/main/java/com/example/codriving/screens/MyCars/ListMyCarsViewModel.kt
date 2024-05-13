@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.codriving.data.Car
+import com.example.codriving.data.model.Car
 import com.example.codriving.data.repository.UploadCarRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,11 +37,18 @@ class ListMyCarsViewModel @Inject constructor(
     private val _isLoadPublished = MutableLiveData(false)
     val isLoadPublished: LiveData<Boolean> get() = _isLoadPublished
 
+    private val _errorMessage = MutableLiveData<String>()
+    val errorMessage: LiveData<String> get() = _errorMessage
 
     init {
         viewModelScope.launch {
-            _carListState.value = uploadCarRepository.getCurretCars()
-            _isLoaded.value = true
+            try {
+                _carListState.value = uploadCarRepository.getCurretCars()
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+            } finally {
+                _isLoaded.value = true
+            }
         }
     }
 
@@ -65,11 +72,9 @@ class ListMyCarsViewModel @Inject constructor(
     }
 
     suspend fun verifyPublishFields(idCar: String): Boolean {
-
         if (_startDay.value.equals(null) || _endDay.value.equals(null) || _price.value == "") {
             return false
         } else {
-            _isLoadPublished.value = true
             uploadCarRepository.publishRentCar(
                 idCar,
                 _startDay.value,
@@ -80,8 +85,12 @@ class ListMyCarsViewModel @Inject constructor(
             _price.value = ""
 
         }
-        _isLoadPublished.value = false
+        _isLoadPublished.value = true
         return true
+    }
+
+    fun setLoad() {
+        _isLoadPublished.value = false
     }
 }
 

@@ -3,8 +3,8 @@ package com.example.codriving.screens.SearchPage
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.codriving.data.Car
-import com.example.codriving.data.RentCars
+import com.example.codriving.data.model.Car
+import com.example.codriving.data.model.RentCars
 import com.example.codriving.data.repository.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +20,6 @@ class SearchPageViewModel @Inject constructor(
     val isLoading: LiveData<Boolean> get() = _isLoading
 
     private var _rentListCar = MutableStateFlow<List<RentCars>>(emptyList())
-    val rentListCar: StateFlow<List<RentCars>> get()  = _rentListCar
 
     private var _carListEnables = MutableStateFlow<HashMap<String, Car>>(HashMap())
     val carListEnable: StateFlow<HashMap<String, Car>> = _carListEnables

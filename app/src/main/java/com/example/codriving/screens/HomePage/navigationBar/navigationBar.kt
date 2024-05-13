@@ -25,7 +25,7 @@ fun navigationBar(navController: NavController) {
     val IconChat: ImageVector = ImageVector.vectorResource(id = R.drawable.iconchat)
 
     val iconsBar = listOf(Icons.Filled.Home, IconCar, IconChat, Icons.Filled.Info)
-    val items = listOf("Home", "Rentals", "Chats", "Help")
+    val items = listOf("Home", "Rentals", "Chats", "Notifications")
     var selectedItem by remember { mutableIntStateOf(0) }
 
     NavigationBar {
@@ -35,11 +35,15 @@ fun navigationBar(navController: NavController) {
                 label = { Text(item) },
                 selected = selectedItem == index,
                 onClick = {
-                    if(index == 0){
+                    if (index == 0) {
                         navController.navigate(AppScreens.HomeScreen.route)
                     }
+
                     if (index == 1) { // Check if it's the "Rentals" item (index 1)
                         navController.navigate(AppScreens.ListMyCarsScreen.route)
+                    }
+                    if (index == 3) {
+                        navController.navigate(AppScreens.NotificationScreen.route)
                     } else {
                         selectedItem = index
                     }

@@ -1,4 +1,4 @@
-package com.example.codriving.UploadRentals
+package com.example.codriving.screens.HomePage
 
 import androidx.annotation.ColorRes
 import androidx.compose.foundation.BorderStroke
@@ -23,34 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.codriving.R
 
-@Composable
-fun UploadRents() {
-    val typesOfUse = listOf("Pick-Up","Date", "Drop-off")
-    val defaultSelectedItemIndex = 0
-    val selectedIndex = remember { mutableStateOf(defaultSelectedItemIndex) }
-
-    Box(Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center)
-    {
-        SegmentedControl(items = typesOfUse , selectedIndex =selectedIndex, startTime = null, dateRange = null, endTime = null ){
-            if(it==0){
-
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewUploadRents() {
-    UploadRents()
-}
 
 /**
  * items : list of items to be render

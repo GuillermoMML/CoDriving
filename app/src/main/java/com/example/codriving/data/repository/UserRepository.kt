@@ -1,22 +1,23 @@
 package com.example.codriving.data.repository
 
 import android.util.Log
-import com.example.codriving.data.User
-import com.google.firebase.auth.FirebaseUser
+import com.example.codriving.data.model.Notification
+import com.example.codriving.data.model.User
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 import javax.inject.Inject
 
 class UserRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuthRepository
 
-) {
+    ) {
 
-    val currentUser: FirebaseUser? = auth.getCurrentUser()
-    val curretUserId: String? = currentUser?.uid
+    val auth = FirebaseAuth.getInstance()
 
 
     suspend fun createUser(newUser: User, uid: String) {
@@ -48,24 +49,27 @@ class UserRepository @Inject constructor(
         return fullName
 
     }
-    suspend fun getUserReferenceById(userId:String): DocumentReference {
+
+    suspend fun getUserReferenceById(userId: String): DocumentReference {
         return firestore.collection("Users").document(userId)
     }
-    suspend fun getUserById(userId: String = curretUserId?: ""): User? {
-        try {
+
+    suspend fun getUserById(userId: String): User? {
+        return try {
             val documentSnapshot: DocumentSnapshot =
                 firestore.collection("Users").document(userId).get().await()
             if (documentSnapshot.exists()) {
-                return documentSnapshot.toObject(User::class.java)
+                documentSnapshot.toObject(User::class.java)
             } else {
                 Log.d(TAG, "getUserById: User not found")
-                return null
+                null
             }
         } catch (e: Exception) {
             Log.w(TAG, "getUserById: Error retrieving user", e)
             throw e
         }
     }
+
     suspend fun documentSnapshotToUser(docRef: DocumentReference): User? {
         val documentSnapshot = docRef.get().await()
         // Verifica si el documento existe
@@ -79,8 +83,55 @@ class UserRepository @Inject constructor(
         }
     }
 
+    fun productNotify(
+        user: User,
+        productId: String,
+        rentsCar: MutableSet<String>,
+        ownerId: String,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val notificationCarCollection = firestore.collection("carNotifications")
+        val notificationId = notificationCarCollection.document().id
+
+        val notifyProductInfo = Notification(
+            idNotification = notificationId,
+            idProduct = productId,
+            idReceiver = ownerId,
+            idSender = auth.currentUser!!.uid,
+            rentsCars = rentsCar.toList(),
+            title = "Tiene una nueva solicitud",
+            message = "${user.fullName} esta interesado es tu coche ",
+            timestamp = Timestamp(Date()),
+            type = 1
+        )
+        notificationCarCollection
+            .add(notifyProductInfo)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                onFailure(e.message ?: "Error desconocido")
+            }
+
+    }
+
     fun logOut() {
         auth.signOut()
+    }
+
+    suspend fun getNotifications(): List<Notification> {
+        // Fetch notifications from Firestore
+        val notificationCollection = firestore.collection("carNotifications")
+        val notificationDocs =
+            notificationCollection.whereEqualTo("idReceiver", auth.currentUser!!.uid).get().await()
+        return notificationDocs.map { document ->
+            document.toObject(Notification::class.java)
+        }
+    }
+
+    fun removeNotify(it: Notification) {
+
     }
 
     // Otras funciones relacionadas con operaciones de usuario si es necesario

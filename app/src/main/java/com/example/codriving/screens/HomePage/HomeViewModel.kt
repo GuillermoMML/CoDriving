@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.codriving.data.Car
+import com.example.codriving.data.model.Car
 import com.example.codriving.data.repository.UploadCarRepository
 import com.example.codriving.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -143,9 +143,6 @@ class HomeViewModel @Inject constructor(private val carRepository: UploadCarRepo
         }catch (e:Exception){
             return false
         }
-    }
-    fun calculateEndDate(startDate: Long): Long {
-        return startDate + (5 * 24 * 60 * 60 * 1000) // 5 days in milliseconds
     }
 
 }

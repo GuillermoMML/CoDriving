@@ -1,8 +1,8 @@
 package com.example.codriving.data.repository
 
 import android.util.Log
-import com.example.codriving.data.Car
-import com.example.codriving.data.RentCars
+import com.example.codriving.data.model.Car
+import com.example.codriving.data.model.RentCars
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
@@ -64,11 +64,5 @@ class SearchRepository @Inject constructor(private val firestore: FirebaseFirest
         }
 
         return cars
-    }
-
-
-    suspend fun getCarPrice(rentRef: DocumentReference): String {
-        val rentCarDocument = rentRef.get().await()
-        return rentCarDocument["pricePerDay"] as String
     }
 }

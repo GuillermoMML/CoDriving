@@ -1,4 +1,4 @@
-package com.example.codriving.data
+package com.example.codriving.data.model
 
 import com.google.firebase.firestore.DocumentReference
 

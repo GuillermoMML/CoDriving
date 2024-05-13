@@ -1,11 +1,12 @@
 package com.example.codriving.screens.RentCar
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme.typography
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.StarHalf
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -23,13 +32,16 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,14 +51,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.codriving.R
 import com.example.codriving.common.HeaderPopBack
-import com.example.codriving.data.Car
-import com.example.codriving.data.RentCars
-import com.example.codriving.data.User
+import com.example.codriving.data.model.Car
+import com.example.codriving.data.model.RentCars
+import com.example.codriving.data.model.User
 import com.example.codriving.navigation.AppScreens
 import com.example.codriving.screens.MyCars.LoadScreen
+import com.example.codriving.ui.theme.md_theme_light_surfaceTint
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
@@ -54,7 +67,6 @@ import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
-
 
 
 @Composable
@@ -78,20 +90,15 @@ fun RentCarScreen(
 
 
     if (isLoading == false) {
-
-        // Show loading indicator here
         LoadScreen()
     } else {
-        // Display content based on "rentCar"
-        // ... your content composables
         Scaffold(modifier = Modifier
-            .padding(5.dp)
             .fillMaxSize(),
             snackbarHost = {
                 SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
-                     HeaderPopBack(navController = navController)
+                HeaderPopBack(navController = navController)
             },
             bottomBar = {
                 //COntroling error data
@@ -113,18 +120,20 @@ fun RentCarScreen(
                         .padding(paddingValues)
                         .fillMaxSize()
                 ) {
-                    if(ownerUser.value != User()){
-                        car?.let { CarouselCard(it) } //POner algo en caso de que falle
-                        listOfRents.let { it.value?.let { it1 ->
-                            bodyRest(it1, car!!.rating, car!!, ownerUser.value?.fullName!!) {
-                                //rentCar es un car
-                                navController.navigate("${AppScreens.BookRentScreen.route}/${idRentCar}")
+                    if (ownerUser.value != User()) {
+                        CarouselCard(car!!.image)
+                        listOfRents.let {
+                            it.value?.let { it1 ->
+                                bodyRest(it1, car!!.rating, car!!, ownerUser.value?.fullName!!) {
+                                    //rentCar es un car
+                                    navController.navigate("${AppScreens.BookRentScreen.route}/${idRentCar}")
+                                }
                             }
-                        } }
-                    }  else{
+                        }
+                    } else {
                         LoadScreen()
                     }
-                    }
+                }
             }
         )
     }
@@ -134,53 +143,75 @@ fun RentCarScreen(
 fun RatingBar(
     rating: Double,
     starSize: Dp = 24.dp,
-    fullStarIconResId: Int = R.drawable.star_solid,
-    halfStarIconResId: Int = R.drawable.star_half_solid,
-    emptyStarIconResId: Int = R.drawable.star_regular
 ) {
     Row {
-
-        for (i in 1 until 6) {
-            val iconResId = when {
-                i <= rating -> fullStarIconResId
-                i <= rating + 0.5 -> halfStarIconResId
-                else -> emptyStarIconResId
-            }
-            Image(
-                painter = painterResource(id = iconResId),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(starSize),
+        if (rating <= 0) {
+            for (i in 1 until 6) {
+                androidx.compose.material.Icon(
+                    Icons.Outlined.StarOutline,
+                    contentDescription = null,
+                    tint = md_theme_light_surfaceTint,
+                    modifier = Modifier.size(starSize)
                 )
+            }
+        } else {
+            for (i in 1 until 6) {
+                val icon =
+                    if (i <= rating) Icons.Filled.Star else if (i - 0.5 <= rating) Icons.AutoMirrored.Filled.StarHalf else Icons.Outlined.StarOutline
+                icon.let {
+                    androidx.compose.material.Icon(
+                        it,
+                        contentDescription = null,
+                        tint = md_theme_light_surfaceTint,
+                        modifier = Modifier.size(starSize)
+                    )
+                }
+            }
+
         }
     }
 }
 
 @Composable
-fun bodyRest(rentCars: List<RentCars>, rating: Double?, rentCar: Car,ownerUser:String = "", onClickBook: () -> Unit) {
+fun bodyRest(
+    rentCars: List<RentCars>,
+    rating: Double?,
+    rentCar: Car,
+    ownerUser: String = "",
+    onClickBook: () -> Unit
+) {
     val ownerName = ownerUser
+    val rentTimes = remember {
+        mutableStateOf(false)
+    }
+
+
     Column(Modifier.fillMaxWidth()) {
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            Column {
-                rentCars.forEach {
-                    val startDate: Date = it.startDate.toDate()
-                    val endDate : Date = it.endDate.toDate()
+            ExpandableItem(title = "Time Availables", expanded = rentTimes, content = {
+                Column {
+                    rentCars.forEach {
+                        val startDate: Date = it.startDate.toDate()
+                        val endDate: Date = it.endDate.toDate()
 
-                    val dateFormat = SimpleDateFormat("dd/MM/yyyy")
-                    val starformattedDate: String = dateFormat.format(startDate)
-                    val endformattedDate: String = dateFormat.format(endDate)
+                        val dateFormat = SimpleDateFormat("dd/MM/yyyy")
+                        val starformattedDate: String = dateFormat.format(startDate)
+                        val endformattedDate: String = dateFormat.format(endDate)
 
-                    Text(
-                        text = it.pricePerDay.toString() + "€/day "+starformattedDate+"-"+endformattedDate,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
+                        Text(
+                            text = it.pricePerDay.toString() + "€/day " + starformattedDate + "-" + endformattedDate,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
 
+                    }
                 }
-            }
+
+            }, onClick = { rentTimes.value = !rentTimes.value })
         }
         Box(
             modifier = Modifier
@@ -213,7 +244,7 @@ fun bodyRest(rentCars: List<RentCars>, rating: Double?, rentCar: Car,ownerUser:S
                         text = "Owner",
                         fontWeight = FontWeight.Bold,
                     )
-                    Text(text =ownerName)
+                    Text(text = ownerName)
                 }
             }
         }
@@ -224,7 +255,8 @@ fun bodyRest(rentCars: List<RentCars>, rating: Double?, rentCar: Car,ownerUser:S
             Button(onClick = { /*TODO*/ }) {
                 Text(text = stringResource(R.string.contact_owner))
             }
-            FilledTonalButton(onClick = { onClickBook()
+            FilledTonalButton(onClick = {
+                onClickBook()
             }) {
                 Text(text = stringResource(R.string.book))
             }
@@ -261,43 +293,64 @@ fun bodyRest(rentCars: List<RentCars>, rating: Double?, rentCar: Car,ownerUser:S
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun CarouselCard(rentCar: Car) {
+fun CarouselCard(bannerUrls: List<String>) {
     val pageState = rememberPagerState()
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-
-    ) {
-        HorizontalPager(
-            count = rentCar.image.size,
-            state = pageState,
-            key = { it },
+    Column {
+        Box(
             modifier = Modifier
-                .height(200.dp)
-        ) { index ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = rentCar.image[index],
+                .fillMaxWidth()
+                .height(280.dp)
+        ) {
+            HorizontalPager(
+                count = bannerUrls.size,
+                state = pageState,
+                key = { it },
+            ) { index ->
+                Image(
+                    painter = rememberAsyncImagePainter(bannerUrls[index]),
                     contentDescription = null,
-                    modifier = Modifier.clip(RoundedCornerShape(10.dp)),
-                    contentScale = ContentScale.Fit
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp)
+                        .clip(shape = RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
                 )
-            }
 
+            }
+            HorizontalPagerIndicator(
+                pagerState = pageState,
+                activeColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(top = 20.dp, bottom = 20.dp)
+            )
         }
-        HorizontalPagerIndicator(
-            pagerState = pageState,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(top = 20.dp, bottom = 20.dp)
-        )
+
+
     }
-    //val pagerState = rememberPagerState(initialPage = 1)
-    //val sliderList = listOf()
 }
 
+@Composable
+fun ExpandableItem(
+    title: String,
+    content: @Composable () -> Unit,
+    expanded: MutableState<Boolean>,
+    onClick: () -> Unit
+) {
+    Column(Modifier.padding(5.dp)) {
+        Row(
+            modifier = Modifier.clickable(onClick = onClick),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = title, style = typography.h6, modifier = Modifier.weight(1f))
+            Icon(
+                imageVector = if (expanded.value) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = if (expanded.value) "Collapse" else "Expand"
+            )
+        }
+        if (expanded.value) {
+            Spacer(modifier = Modifier.height(8.dp))
+            content()
+        }
+    }
+}

@@ -51,7 +51,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.codriving.R
-import com.example.codriving.data.Year
+import com.example.codriving.data.model.Year
 
 
 @Composable
@@ -301,8 +301,6 @@ fun YearDropDown(
 fun LoadScreen() {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0x80000000), // Color de fondo semitransparente
-        contentColor = Color.White, // Color del contenido (por ejemplo, el indicador de carga)
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator() // Indicador de carga circular
@@ -471,7 +469,8 @@ fun ImageUploadScreen(
         }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Button(
             onClick = { getContent.launch("image/*") },

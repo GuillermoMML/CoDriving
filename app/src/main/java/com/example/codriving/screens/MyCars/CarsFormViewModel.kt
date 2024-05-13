@@ -5,8 +5,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.codriving.data.Car
-import com.example.codriving.data.Year
+import com.example.codriving.data.model.Car
+import com.example.codriving.data.model.Year
 import com.example.codriving.data.repository.FirebaseStorageRepository
 import com.example.codriving.data.repository.UploadCarRepository
 import com.example.codriving.data.repository.UserRepository
@@ -78,9 +78,7 @@ private val userRepository: UserRepository) : ViewModel() {
         _selectedYear.value = year
     }
 
-    fun validate(text: String) {
-        _isError.value = text.length > 7
-    }
+
 
     fun setMarca(modelo: String) {
         _selectMarca.value = modelo
@@ -121,10 +119,11 @@ private val userRepository: UserRepository) : ViewModel() {
                     brand = _selectMarca.value!!,
                     image = uploadedImageUrls,
                     kilometers = _mileageState.value!!,
-                    owner = userRepository.getUserReferenceById(userRepository.curretUserId!!),
+                    owner = userRepository.getUserReferenceById(userRepository.auth.uid!!),
                     model = _selectModel.value!!,
                     year = _selectedYear.value!!.value.toString(),
-                    rentCars = emptyList())
+                    rentCars = emptyList()
+                )
 
                 uploadCarRepository.createCar(newCar)
                 _isLoading.value = false

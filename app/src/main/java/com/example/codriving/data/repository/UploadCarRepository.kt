@@ -3,8 +3,10 @@ package com.example.codriving.data.repository
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.codriving.data.Car
-import com.example.codriving.data.RentCars
+import com.example.codriving.data.model.Car
+import com.example.codriving.data.model.RentCars
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -15,9 +17,7 @@ import javax.inject.Inject
 
 class UploadCarRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    firebaseAuthRepository: FirebaseAuthRepository
 ) {
-    val curretUserId = firebaseAuthRepository.getCurrentUser()!!.uid
 
     suspend fun getModelsByMark(marca: String): List<String> {
         val modelos = mutableListOf<String>()
@@ -66,15 +66,14 @@ class UploadCarRepository @Inject constructor(
     }
 
     suspend fun createCar(car: Car) {
+        val auth = FirebaseAuth.getInstance().uid
         try {
-
-
             val carDocRef = firestore.collection("Cars").document()
             carDocRef.set(car)
                 .await()
             //Referencia user
             val userDocRef = firestore.collection("Users")
-                .document(curretUserId)
+                .document(auth!!)
             // Agrega el ID del carro recién creado a la lista en el documento del usuario
             userDocRef.update("cars", FieldValue.arrayUnion(carDocRef.id))
                 .await()
@@ -88,7 +87,8 @@ class UploadCarRepository @Inject constructor(
     suspend fun getCurretCars(): Map<String, Car> {
         val carMap = mutableMapOf<String, Car>()
         try {
-            val userDocRef = firestore.collection("Users").document(curretUserId)
+            val userDocRef =
+                firestore.collection("Users").document(FirebaseAuth.getInstance().uid.toString())
             val document = userDocRef.get().await()
             val carIds: List<String>? = document.get("cars") as? List<String>
             if (carIds != null) {
@@ -138,12 +138,13 @@ class UploadCarRepository @Inject constructor(
     }
 
     suspend fun deleteCar(carId: String) {
+        val auth = FirebaseAuth.getInstance()
         try {
             // Elimina el documento del coche
             firestore.collection("Cars").document(carId).delete().await()
             // Elimina la referencia del coche de todos los usuarios que lo tienen alquilado
             val userQuerySnapshot =
-                firestore.collection("Users").document(curretUserId).get().await()
+                firestore.collection("Users").document(auth.currentUser!!.uid).get().await()
             val usersCars = userQuerySnapshot.get("cars") as? List<String>
             if (usersCars != null) {
                 val updatedCars = usersCars.toMutableList()
@@ -191,24 +192,26 @@ class UploadCarRepository @Inject constructor(
 
     }
 
-    suspend fun getRentsByCar(listDocument: List<DocumentReference?>): MutableList<RentCars> {
+    suspend fun getRentsByCar(listDocument: List<DocumentReference?>): HashMap<String, RentCars> {
 
-        val rentCarsList = mutableListOf<RentCars>()
+        val rentCarsMap = hashMapOf<String, RentCars>()
 
         for (rentCarRef in listDocument) {
             val rentCarDocument = rentCarRef!!.get().await()
+            val documentId = rentCarDocument.id  // Get the document ID as the key
+
             val rentCar = RentCars(
                 carId = rentCarDocument["carId"] as DocumentReference,
                 ownerName = rentCarDocument["ownerName"] as String,
                 pricePerDay = rentCarDocument["pricePerDay"] as Double,
-                startDate = rentCarDocument["startDate"] as com.google.firebase.Timestamp,
-                endDate = rentCarDocument["endDate"] as com.google.firebase.Timestamp
+                startDate = rentCarDocument["startDate"] as Timestamp,
+                endDate = rentCarDocument["endDate"] as Timestamp
             )
-            rentCarsList.add(rentCar)
+            rentCarsMap[documentId] = rentCar  // Add RentCar to map with document ID as key
         }
 
 
-        return rentCarsList
+        return rentCarsMap
 
 
     }
@@ -218,10 +221,12 @@ class UploadCarRepository @Inject constructor(
 
             val carId = carIdwithBrackets.replace(Regex("\\[(.*?)\\]"), "$1")
 
-            val startStamp = com.google.firebase.Timestamp(start)
-            val endStamp = com.google.firebase.Timestamp(end)
+            val startStamp = Timestamp(start)
+            val endStamp = Timestamp(end)
 
-            val userDoc = firestore.collection("Users").document(curretUserId).get().await()
+            val userDoc =
+                firestore.collection("Users").document(FirebaseAuth.getInstance().uid.toString())
+                    .get().await()
             val ownerName = userDoc.getString("fullName") ?: ""
 
             // Get the car reference directly

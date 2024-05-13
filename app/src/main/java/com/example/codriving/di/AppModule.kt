@@ -38,23 +38,24 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserRepository(firestore: FirebaseFirestore): UserRepository {
-        return UserRepository(firestore, provideAuthRepository(provideFirebaseAuth()))
+        return UserRepository(firestore)
     }
     @Provides
     @Singleton
     fun provideSearchRepository(firestore: FirebaseFirestore): SearchRepository {
         return SearchRepository(firestore)
     }
+
     @Provides
     @Singleton
-    fun provideAuthRepository(auth: FirebaseAuth): FirebaseAuthRepository
-    {
+    fun provideAuthRepository(auth: FirebaseAuth): FirebaseAuthRepository {
         return FirebaseAuthRepository(auth)
     }
+
     @Provides
     @Singleton
-    fun provideUploadCarRepository(firestore: FirebaseFirestore,firebaseAuthRepository: FirebaseAuthRepository): UploadCarRepository {
-        return UploadCarRepository(firestore,firebaseAuthRepository)
+    fun provideUploadCarRepository(firestore: FirebaseFirestore): UploadCarRepository {
+        return UploadCarRepository(firestore)
     }
 
     @Provides

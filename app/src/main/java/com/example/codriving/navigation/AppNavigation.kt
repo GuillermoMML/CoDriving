@@ -20,13 +20,15 @@ import com.example.codriving.screens.MyCars.ListMyCarsScreen
 import com.example.codriving.screens.RentCar.RentCarScreen
 import com.example.codriving.screens.RentCar.RentCarViewModel
 import com.example.codriving.screens.SignUp.SignScreen
+import com.example.codriving.screens.notificationPage.notificationView
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun AppNavigation (
-     navController: NavHostController = rememberNavController(), auth: FirebaseAuth
+fun AppNavigation(
+    navController: NavHostController = rememberNavController(),
+    auth: FirebaseAuth,
+    isLogged: () -> Unit
 ) {
-    val auth = FirebaseAuth.getInstance()
 
 
     NavHost(navController = navController, startDestination = AppScreens.LoginScreen.route) {
@@ -48,14 +50,13 @@ fun AppNavigation (
             )
         }
         composable(route = AppScreens.LoginScreen.route) {
-
-
             val loginViewModel: LoginViewModel = hiltViewModel()
 
             LoginScreen(navController, loginViewModel) {
-
                 if (auth.currentUser != null) {
                     navController.navigate(AppScreens.HomeScreen.route)
+                } else {
+                    isLogged()
                 }
 
                 navController.navigate(AppScreens.HomeScreen.route) {
@@ -117,6 +118,11 @@ fun AppNavigation (
             BookRentScreen(navController = navController, BookRentViewModel)
 
         }
+
+        composable(AppScreens.NotificationScreen.route) {
+            notificationView(navController = navController)
+        }
+
 
     }
 }

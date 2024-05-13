@@ -19,7 +19,7 @@ fun HeaderPopBack(navController:NavController){
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp)
+            .height(50.dp)
     ) {
         Icon(
             Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "back",

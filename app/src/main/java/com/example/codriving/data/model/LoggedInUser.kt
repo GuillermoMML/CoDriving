@@ -1,4 +1,4 @@
-package com.example.codriving.data
+package com.example.codriving.data.model
 
 // Model
 data class LoggedInUser(

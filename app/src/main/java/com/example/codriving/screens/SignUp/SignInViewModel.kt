@@ -4,7 +4,7 @@ import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.codriving.data.User
+import com.example.codriving.data.model.User
 import com.example.codriving.data.repository.FirebaseAuthRepository
 import com.example.codriving.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

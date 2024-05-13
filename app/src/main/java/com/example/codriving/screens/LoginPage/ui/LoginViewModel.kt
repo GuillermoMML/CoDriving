@@ -5,7 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.codriving.data.LoggedInUser
+import com.example.codriving.data.model.LoggedInUser
 import com.example.codriving.data.repository.FirebaseAuthRepository
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth

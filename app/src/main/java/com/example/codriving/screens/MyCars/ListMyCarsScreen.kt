@@ -15,8 +15,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Delete
@@ -33,6 +35,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -60,8 +63,9 @@ import coil.compose.AsyncImage
 import com.example.codriving.common.PrecioTextField
 import com.example.codriving.common.contentModalSheet
 import com.example.codriving.common.getFormattedDateNoYear
-import com.example.codriving.data.Car
+import com.example.codriving.data.model.Car
 import com.example.codriving.navigation.AppScreens
+import com.example.codriving.ui.theme.md_theme_dark_onTertiary
 import kotlinx.coroutines.launch
 
 
@@ -73,16 +77,13 @@ fun ListMyCarsScreen(navController: NavHostController) {
     val viewModel: ListMyCarsViewModel = hiltViewModel()
     val listMyCarsState = viewModel.carListState.collectAsState()
     val isLoaded = viewModel.isLoaded.observeAsState()
+    val errorMessage = viewModel.errorMessage.observeAsState()
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val bottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-    var selectStartDay by remember { mutableStateOf("") }
-    var selectEndDay by remember { mutableStateOf("") }
-    var finishedPublished by remember { mutableStateOf(false) }
     var showSnackbar by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-
 
     var currentCar by remember {
         mutableStateOf(HashMap<String, Car>())
@@ -92,14 +93,6 @@ fun ListMyCarsScreen(navController: NavHostController) {
             false
         )
     }
-
-    if (finishedPublished) {
-        selectEndDay = ""
-        selectStartDay = ""
-        showModal = false
-        finishedPublished = false
-    }
-
 
     val expandedFab by remember {
         derivedStateOf {
@@ -129,11 +122,8 @@ fun ListMyCarsScreen(navController: NavHostController) {
                             onDismissRequest = { showModal = false },
                             onConfirmation = {
                                 coroutineScope.launch {
-                                    if (viewModel.verifyPublishFields(idCar = it)) {
-                                        finishedPublished = true
-                                    } else {
-                                        showSnackbar = true
-                                    }
+                                    showModal = false
+                                    viewModel.setLoad()
                                 }
                             },
                             onShowDatePicker = {
@@ -205,6 +195,14 @@ fun ListMyCarsScreen(navController: NavHostController) {
         }
     } else {
         LoadScreen()
+        if (!errorMessage.value.isNullOrEmpty()) {
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = errorMessage.value!!)
+            }
+        }
     }
 }
 
@@ -214,13 +212,16 @@ fun DialogWithImage(
     viewModel: ListMyCarsViewModel,
     item: HashMap<String, Car>,
     onDismissRequest: () -> Unit,
-    onConfirmation: (String) -> Unit,
+    onConfirmation: () -> Unit,
     onShowDatePicker: (Boolean) -> Unit,
 ) {
     var precio by remember { mutableStateOf("") }
     val startDay = viewModel.startDay.collectAsState()
     val endDay = viewModel.endDay.collectAsState()
-
+    val UploadRent = remember {
+        mutableStateOf(false)
+    }
+    val coroutineScope = rememberCoroutineScope()
     val actualCar = item.values.first()
     // Draw a rectangle shape with rounded corners inside the dialog
     Card(
@@ -230,87 +231,107 @@ fun DialogWithImage(
             .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
     ) {
-        if (!viewModel.isLoadPublished.value!!) {
+        if (viewModel.isLoadPublished.value!!) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                AsyncImage(
-                    model = actualCar.image[0],
-                    contentDescription = "Car Image",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .height(160.dp)
-                )
-                Text(
-                    text = actualCar.model,
-                    modifier = Modifier.padding(16.dp),
-                )
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Price per Day: ")
-                        PrecioTextField(
-                            value = precio,
-                            onValueChange = { nuevoPrecio ->
-                                precio = nuevoPrecio
-                                viewModel.updatePrice(nuevoPrecio)
-                            }
-                        )
-
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-
-                        TextButton(onClick = { onShowDatePicker(true) }) {
-                            Text(text = "Select Dates")
-                        }
-                        if (endDay.value != null) {
-                            Text(
-                                "${getFormattedDateNoYear(startDay.value.time)}-${
-                                    getFormattedDateNoYear(
-                                        endDay.value.time
-                                    )
-                                }"
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        TextButton(
-                            onClick = { onDismissRequest() },
-                            modifier = Modifier.padding(8.dp),
-                        ) {
-                            Text("Cancel")
-                        }
-
-                        TextButton(
-                            onClick = {
-                                onConfirmation(item.keys.toString())
-                            },
-                            modifier = Modifier.padding(8.dp),
-                        ) {
-                            Text("Publish")
-                        }
-                    }
-
+                Text(text = "Se ha publicado correctamente")
+                OutlinedButton(onClick = { onConfirmation() }) {
+                    Text(text = "Ok")
                 }
             }
 
         } else {
-            LoadScreen()
+            if (!UploadRent.value) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+
+                    AsyncImage(
+                        model = actualCar.image[0],
+                        contentDescription = "Car Image",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .height(160.dp)
+                    )
+                    Text(
+                        text = actualCar.model,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Price per Day: ")
+                            PrecioTextField(
+                                value = precio,
+                                onValueChange = { nuevoPrecio ->
+                                    precio = nuevoPrecio
+                                    viewModel.updatePrice(nuevoPrecio)
+                                }
+                            )
+
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+
+                            TextButton(onClick = { onShowDatePicker(true) }) {
+                                Text(text = "Select Dates")
+                            }
+                            if (endDay.value != null) {
+                                Text(
+                                    "${getFormattedDateNoYear(startDay.value.time)}-${
+                                        getFormattedDateNoYear(
+                                            endDay.value.time
+                                        )
+                                    }"
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            OutlinedButton(
+                                onClick = { onDismissRequest() },
+                                modifier = Modifier.padding(8.dp),
+                            ) {
+                                Text("Cancel")
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        UploadRent.value = true
+                                        viewModel.verifyPublishFields(idCar = item.keys.toString())
+                                        UploadRent.value = false
+                                    }
+                                },
+                                enabled = !UploadRent.value,
+                                modifier = Modifier.padding(8.dp),
+                            ) {
+                                Text("Publish")
+                            }
+                        }
+
+                    }
+                }
+
+            } else {
+                LoadScreen()
+
+            }
         }
     }
 }
@@ -333,14 +354,35 @@ fun previewCardsList(
         leadingContent = {
             item.value.image.firstOrNull()?.let { imageUrl ->
 
-                Box(
-                ) {
+                Box(modifier = Modifier.size(135.dp)) {
                     AsyncImage(
                         model = imageUrl,
                         contentDescription = "Car Image",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(135.dp)
+                        modifier = Modifier.fillMaxSize()
                     )
+                    Surface(
+                        color = Color(0x44000000), // Color con alfa reducido
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        )
+                        {
+                            if (item.value.rentCars.isNotEmpty()) {
+
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = md_theme_dark_onTertiary
+                                )
+
+
+                            }
+                        }
+                    }
                 }
             }
 
