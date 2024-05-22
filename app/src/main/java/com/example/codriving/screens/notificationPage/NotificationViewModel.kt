@@ -1,5 +1,6 @@
 package com.example.codriving.screens.notificationPage
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.codriving.common.generatefilePathPDF
 import com.example.codriving.data.model.Notification
 import com.example.codriving.data.model.RequestNotification
 import com.example.codriving.data.repository.UploadCarRepository
@@ -165,5 +167,14 @@ class NotificationViewModel @Inject constructor(
 
     fun setCurretNotify(list: List<DocumentReference>) {
         _currentNotifies.value = list.toMutableList()
+    }
+
+    fun setInfoMessage(input: String? = "") {
+        _infoMessage.value = input
+    }
+
+    fun generateModelPDF(context: Context): String? {
+
+        return generatefilePathPDF(context)
     }
 }

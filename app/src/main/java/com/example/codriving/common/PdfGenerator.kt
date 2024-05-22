@@ -5,18 +5,20 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.loader.content.CursorLoader
 import com.example.codriving.R
 import java.io.File
 import java.io.FileOutputStream
@@ -25,11 +27,7 @@ import java.io.IOException
 
 // on below line we are creating a generate PDF
 // method which is use to generate our PDF file.
-fun generatePDF(context: Context) {
-
-    if (!checkAndRequestPermissions(context as Activity)) {
-        return
-    }
+fun generatePDF(context: Context): String? {
 
     val pageHeight = 1120
     val pageWidth = 792
@@ -92,8 +90,10 @@ fun generatePDF(context: Context) {
         yPosition += textPaint.descent() - textPaint.ascent()
     }
     pdfDocument.finishPage(myPage)
+    var filePath: String? = null
 
     try {
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val contentValues = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, "rentCarFile.pdf")
@@ -109,12 +109,8 @@ fun generatePDF(context: Context) {
             uri?.let {
                 context.contentResolver.openOutputStream(it)?.use { outputStream ->
                     pdfDocument.writeTo(outputStream)
-                    Toast.makeText(
-                        context,
-                        "PDF file generated in Documents: ${it.path}",
-                        Toast.LENGTH_SHORT
-                    ).show()
                 }
+                filePath = getRealPathFromURI(it, context)
             }
         } else {
             val documentsDir =
@@ -125,20 +121,26 @@ fun generatePDF(context: Context) {
             val file = File(documentsDir, "GFG.pdf")
             FileOutputStream(file).use { outputStream ->
                 pdfDocument.writeTo(outputStream)
-                Toast.makeText(
-                    context,
-                    "PDF file generated in Documents: ${file.absolutePath}",
-                    Toast.LENGTH_SHORT
-                ).show()
             }
+            filePath = file.absolutePath
+
         }
     } catch (e: IOException) {
         e.printStackTrace()
-        Toast.makeText(context, "Failed to generate PDF: ${e.message}", Toast.LENGTH_SHORT).show()
     } finally {
         pdfDocument.close()
+        return filePath
     }
+    return null
 
+}
+
+fun generatefilePathPDF(context: Context): String? {
+
+    if (!checkAndRequestPermissions(context as Activity)) {
+        throw IllegalAccessError("No tienes permisos")
+    }
+    return generatePDF(context)
 }
 
 fun checkAndRequestPermissions(activity: Activity): Boolean {
@@ -162,3 +164,15 @@ fun checkAndRequestPermissions(activity: Activity): Boolean {
     }
 }
 
+private fun getRealPathFromURI(contentUri: Uri, context: Context): String? {
+    val proj = arrayOf(MediaStore.Images.Media.DATA)
+    val loader = CursorLoader(context, contentUri, proj, null, null, null)
+    val cursor: Cursor? = loader.loadInBackground()
+    val columnIndex: Int = cursor
+        ?.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+        ?: return null
+    cursor.moveToFirst()
+    val result: String? = cursor.getString(columnIndex)
+    cursor.close()
+    return result
+}

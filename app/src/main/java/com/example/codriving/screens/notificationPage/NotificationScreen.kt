@@ -1,5 +1,6 @@
 package com.example.codriving.screens.notificationPage
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -44,6 +45,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,6 +74,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -80,6 +86,7 @@ import com.example.codriving.screens.MyCars.LoadScreen
 import com.google.firebase.firestore.DocumentReference
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -93,6 +100,8 @@ fun notificationView(
     val notificationLastWeek = viewModel.notificationsLastWeek.observeAsState()
     val userNotification = viewModel.userNotification.observeAsState()
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val errorMessage = viewModel.error.observeAsState()
 
     val refreshState = rememberPullRefreshState(
@@ -108,9 +117,13 @@ fun notificationView(
     }
     val currentNotify = viewModel.currentNotifies.observeAsState()
     val info = viewModel.infoMessage.observeAsState()
+    val context = LocalContext.current
 
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             HeaderPopBack(navController = navController)
         },
@@ -120,17 +133,19 @@ fun notificationView(
                     viewModel.getRentsString()
                 }
                 BasicAlertDialog(
-                    onDismissRequest = { showInfoDialog.value = false },
+                    onDismissRequest = {
+                        showInfoDialog.value = false
+                        viewModel.setInfoMessage()
+                    },
                 ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        shape = RoundedCornerShape(16.dp),
-                    ) {
-                        if (info.value.equals("")) {
-                            LoadScreen()
-                        } else {
+                    if (info.value.equals("")) {
+                    } else {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            shape = RoundedCornerShape(16.dp),
+                        ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     modifier = Modifier.fillMaxWidth(),
@@ -147,6 +162,7 @@ fun notificationView(
                         }
 
                     }
+
                 }
 
             }
@@ -174,6 +190,59 @@ fun notificationView(
                                 onShowInfo = {
                                     showInfoDialog.value = true
                                     viewModel.setCurretNotify(it)
+                                },
+                                onConfirm = {
+                                    scope.launch {
+
+                                        try {
+                                            // Llama al método en el ViewModel para generar el PDF
+                                            val file = viewModel.generateModelPDF(context)
+                                            // Muestra un mensaje de éxito después de generar el PDF
+                                            if (!file.isNullOrEmpty()) {
+                                                val result = snackbarHostState
+                                                    .showSnackbar(
+                                                        message = "Se generó el contrato",
+                                                        actionLabel = "Ver",
+                                                        // Defaults to SnackbarDuration.Short
+                                                        duration = SnackbarDuration.Long
+                                                    )
+                                                when (result) {
+                                                    SnackbarResult.ActionPerformed -> {
+                                                        val uri = FileProvider.getUriForFile(
+                                                            context,
+                                                            context.applicationContext.packageName + ".provider",
+                                                            File(file)
+                                                        )
+                                                        val intent =
+                                                            Intent(Intent.ACTION_VIEW).apply {
+                                                                flags =
+                                                                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                                                setDataAndType(
+                                                                    uri,
+                                                                    "application/pdf"
+                                                                )
+                                                            }
+                                                        context.applicationContext.startActivity(
+                                                            intent
+                                                        )
+                                                    }
+
+                                                    SnackbarResult.Dismissed -> {
+                                                        /* Handle snackbar dismissed */
+                                                    }
+                                                }
+                                            } else {
+                                                snackbarHostState.showSnackbar("Error al generar el pdf")
+
+                                            }
+
+                                        } catch (e: Exception) {
+                                            // En caso de error, muestra un mensaje de error
+                                            snackbarHostState.showSnackbar("Error al generar el contrato ${e.message}")
+
+                                        }
+                                    }
+
                                 },
                                 onDelete = {
                                     if (it.type == 1) {
@@ -204,6 +273,7 @@ fun notificationView(
                                     showInfoDialog.value = true
                                     viewModel.setCurretNotify(it)
                                 },
+                                onConfirm = {},
                                 onDelete = {
                                     if (it.type == 1) {
                                         showDialogCancel.value = true
@@ -382,7 +452,8 @@ fun ListNotifies(
     notificationlist: MutableList<Notification>?,
     userNotification: State<HashMap<String, RequestNotification>?>,
     onDelete: (Notification) -> Unit,
-    onShowInfo: (List<DocumentReference>) -> Unit
+    onShowInfo: (List<DocumentReference>) -> Unit,
+    onConfirm: (Notification) -> Unit
 ) {
 
     ElevatedCard(modifier = Modifier.padding(10.dp)) {
@@ -396,7 +467,7 @@ fun ListNotifies(
                                 userNotification = userNotification.value!![it.idSender]!!,
                                 onCancel = { onDelete(it) },
                                 onShowInfo = { onShowInfo(it.rentsCars) },
-                                onConfirm = {}
+                                onConfirm = { onConfirm(it) }
                             )
 
                         }
@@ -569,7 +640,9 @@ fun userNotifyItem(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     IconButton(
-                        onClick = {},
+                        onClick = {
+                            onConfirm()
+                        },
                     ) {
                         Icon(
                             Icons.Default.Check, contentDescription = null,
