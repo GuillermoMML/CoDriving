@@ -4,7 +4,6 @@ import android.app.NotificationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.core.app.NotificationCompat
@@ -17,7 +16,6 @@ import com.example.codriving.data.model.User
 import com.example.codriving.data.repository.UploadCarRepository
 import com.example.codriving.data.repository.UserRepository
 import com.example.codriving.navigation.AppNavigation
-import com.example.codriving.screens.LoginPage.ui.LoginViewModel
 import com.example.codriving.ui.theme.CoDrivingTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -36,7 +34,6 @@ class MainActivity : ComponentActivity() {
     lateinit var userRepository: UserRepository
     lateinit var uploadCarRepository: UploadCarRepository
 
-    private val viewModel by viewModels<LoginViewModel>()
 
     /*
         private val gooogleAuthUiCLient by lazy {
@@ -92,6 +89,8 @@ class MainActivity : ComponentActivity() {
         notificationManager.notify(1, notification)
 
     }
+
+
 }
 
 @Composable

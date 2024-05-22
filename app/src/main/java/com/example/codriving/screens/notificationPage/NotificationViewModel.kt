@@ -1,5 +1,6 @@
 package com.example.codriving.screens.notificationPage
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,8 +13,11 @@ import com.example.codriving.data.model.RequestNotification
 import com.example.codriving.data.repository.UploadCarRepository
 import com.example.codriving.data.repository.UserRepository
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentReference
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.text.DateFormat
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,6 +30,15 @@ class NotificationViewModel @Inject constructor(
     private val _notificationsThisWeek = MutableLiveData<MutableList<Notification>>(mutableListOf())
     private val _notificationsLastWeek = MutableLiveData<MutableList<Notification>>(mutableListOf())
     private val _usersNotifications = MutableLiveData<HashMap<String, RequestNotification>>()
+    private var currentNotify = Notification()
+    private var typeWeek = 0
+    private val _error = MutableLiveData("")
+    private val _infoMessage = MutableLiveData("")
+
+    private val _currentNotifies = MutableLiveData<MutableList<DocumentReference>>(mutableListOf())
+    val error: LiveData<String> get() = _error
+    val infoMessage: LiveData<String> get() = _infoMessage
+
     var resfresh by mutableStateOf(false)
     private val _isLoading = MutableLiveData(true)
     val notificationsThisWeek: LiveData<MutableList<Notification>> get() = _notificationsThisWeek
@@ -34,6 +47,9 @@ class NotificationViewModel @Inject constructor(
 
     val currentTime = Timestamp.now()
     val isLoading: LiveData<Boolean> get() = _isLoading
+
+    val currentNotifies: LiveData<MutableList<DocumentReference>> get() = _currentNotifies
+
 
     init {
 
@@ -46,20 +62,9 @@ class NotificationViewModel @Inject constructor(
     }
 
 
-    private fun addNotification(notification: Notification) {
-        val timeDifference =
-            (currentTime.seconds - notification.timestamp!!.seconds) / (60 * 60 * 24) // diferencia en días
-
-        if (timeDifference <= 7) {
-            _notificationsThisWeek.value?.add(notification)
-            _notificationsThisWeek.value = _notificationsThisWeek.value
-        } else {
-            _notificationsLastWeek.value?.add(notification)
-            _notificationsLastWeek.value = _notificationsLastWeek.value
-        }
-    }
 
     private suspend fun getUserByNotification(notification: Notification) {
+
         val user = userRepository.getUserById(notification.idSender)
         val car = uploadCarRepository.getCarById(notification.idProduct!!)
 
@@ -69,7 +74,7 @@ class NotificationViewModel @Inject constructor(
         }
     }
 
-    private suspend fun getNotifications() {
+    suspend fun getNotifications() {
         val auxThisWeek = mutableListOf<Notification>()
         val auxLastWeek = mutableListOf<Notification>()
 
@@ -85,10 +90,9 @@ class NotificationViewModel @Inject constructor(
                 auxLastWeek.add(notification)
             }
 
-            if (notification.type == 1) {
-                getUserByNotification(notification)
+            getUserByNotification(notification)
 
-            }
+
         }
         _notificationsThisWeek.value!!.clear()
         _notificationsLastWeek.value!!.clear()
@@ -105,13 +109,61 @@ class NotificationViewModel @Inject constructor(
         resfresh = false
     }
 
-    fun removeNotifyThisWeek(it: Notification) {
-        userRepository.removeNotify(it)
-        _notificationsThisWeek.value!!.remove(it)
+
+    fun removeNotify(cause: String?) {
+
+        if (currentNotify != Notification()) {
+            _isLoading.value = true
+            if (typeWeek == 1) {
+                userRepository.removeNotifyType1(
+                    currentNotify,
+                    cause,
+                    onSuccess = { Log.d("Sucess", "Existo al borrar") },
+                    onFailure = { _error.value = it })
+                _notificationsThisWeek.value!!.remove(currentNotify)
+            } else if (typeWeek == 2) {
+                userRepository.removeNotifyType2(currentNotify)
+                _notificationsLastWeek.value!!.remove(currentNotify)
+
+            }
+
+        } else {
+            _error.value = "No se encontró la notificación"
+
+        }
+        _isLoading.value = false
+
     }
 
-    fun removeNotifyLastWeek(it: Notification) {
-        _notificationsLastWeek.value!!.remove(it)
+
+    fun removeNotify(it: Notification, i: Int) {
+        typeWeek = i
+        currentNotify = it
+        if (typeWeek == 2) {
+            removeNotify("")
+        }
     }
 
+    fun setError() {
+        _error.value = String()
+    }
+
+    suspend fun getRentsString() {
+        val formatter = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault())
+
+        // formatter.format(date)
+
+        var message = ""
+        _currentNotifies.value!!.forEach {
+            val rent = uploadCarRepository.getCarRentByReference(it)
+            message += (rent?.startDate?.toDate()?.let { it1 -> formatter.format(it1) })
+            message += " " + (rent?.endDate?.toDate()?.let { it1 -> formatter.format(it1) }) + "\n"
+        }
+        _infoMessage.value = message
+
+    }
+
+    fun setCurretNotify(list: List<DocumentReference>) {
+        _currentNotifies.value = list.toMutableList()
+    }
 }

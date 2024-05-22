@@ -8,5 +8,5 @@ data class RentReview(
     val rating: Int,
     val comment: String,
     val date: LocalDate,
-    val RentCars: RentCars
+    val rentCars: RentCars
 )

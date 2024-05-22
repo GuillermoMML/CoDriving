@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme.typography
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.StarHalf
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -25,6 +24,7 @@ import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -54,7 +54,6 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.codriving.R
 import com.example.codriving.common.HeaderPopBack
-import com.example.codriving.data.model.Car
 import com.example.codriving.data.model.RentCars
 import com.example.codriving.data.model.User
 import com.example.codriving.navigation.AppScreens
@@ -65,8 +64,9 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
+import java.text.DateFormat
 import java.util.Date
+import java.util.Locale
 
 
 @Composable
@@ -124,7 +124,10 @@ fun RentCarScreen(
                         CarouselCard(car!!.image)
                         listOfRents.let {
                             it.value?.let { it1 ->
-                                bodyRest(it1, car!!.rating, car!!, ownerUser.value?.fullName!!) {
+                                bodyRest(
+                                    it1, car!!.rating, //car!!,
+                                    ownerUser.value?.fullName!!
+                                ) {
                                     //rentCar es un car
                                     navController.navigate("${AppScreens.BookRentScreen.route}/${idRentCar}")
                                 }
@@ -176,10 +179,10 @@ fun RatingBar(
 fun bodyRest(
     rentCars: List<RentCars>,
     rating: Double?,
-    rentCar: Car,
     ownerUser: String = "",
     onClickBook: () -> Unit
 ) {
+    val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault())
     val ownerName = ownerUser
     val rentTimes = remember {
         mutableStateOf(false)
@@ -195,18 +198,20 @@ fun bodyRest(
             ExpandableItem(title = "Time Availables", expanded = rentTimes, content = {
                 Column {
                     rentCars.forEach {
-                        val startDate: Date = it.startDate.toDate()
-                        val endDate: Date = it.endDate.toDate()
+                        if (it.busy != true) {
+                            val startDate: Date = it.startDate.toDate()
+                            val endDate: Date = it.endDate.toDate()
 
-                        val dateFormat = SimpleDateFormat("dd/MM/yyyy")
-                        val starformattedDate: String = dateFormat.format(startDate)
-                        val endformattedDate: String = dateFormat.format(endDate)
+                            val starformattedDate: String = dateFormat.format(startDate)
+                            val endformattedDate: String = dateFormat.format(endDate)
 
-                        Text(
-                            text = it.pricePerDay.toString() + "€/day " + starformattedDate + "-" + endformattedDate,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
+                            Text(
+                                text = it.pricePerDay.toString() + "€/day " + starformattedDate + " - " + endformattedDate,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                        }
+
 
                     }
                 }
@@ -342,7 +347,7 @@ fun ExpandableItem(
             modifier = Modifier.clickable(onClick = onClick),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = title, style = typography.h6, modifier = Modifier.weight(1f))
+            Text(text = title, style = typography.titleLarge, modifier = Modifier.weight(1f))
             Icon(
                 imageVector = if (expanded.value) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = if (expanded.value) "Collapse" else "Expand"

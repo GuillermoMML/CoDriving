@@ -1,6 +1,7 @@
 package com.example.codriving.data.model
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentReference
 import java.util.Date
 
 data class Notification(
@@ -11,6 +12,6 @@ data class Notification(
     val title: String? = "",
     val message: String? = "",
     val timestamp: Timestamp? = Timestamp(Date()),
-    val type: Int = 0, //tipo = 1 usuarios interesado , tipo 2  = informativo
-    val rentsCars: List<String> = emptyList()
+    var type: Int = 0, //tipo = 1 usuarios interesado , tipo 2  = informativo
+    val rentsCars: List<DocumentReference> = emptyList()
 )

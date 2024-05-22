@@ -48,7 +48,9 @@ import com.example.codriving.common.HeaderPopBack
 import com.example.codriving.data.model.User
 import com.example.codriving.screens.MyCars.ImageUploadScreen
 import com.example.codriving.screens.RentCar.ExpandableItem
-import java.text.SimpleDateFormat
+import com.google.firebase.firestore.DocumentReference
+import java.text.DateFormat
+import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.N)
 @Composable
@@ -67,19 +69,19 @@ fun BookRentScreen(
     val username = viewModel.username.observeAsState()
     val email = viewModel.email.observeAsState()
     var selectedImageUris by remember { mutableStateOf(emptyList<Uri>()) }
-    val enableSend = mutableStateOf(true)
+    val enableSend = mutableStateOf(false)
     val phone = viewModel.phone.observeAsState()
     val rentTimes = remember {
         mutableStateOf(false)
     }
-    var selectedRentCars by remember { mutableStateOf<MutableSet<String>>(mutableSetOf()) }
+    var selectedRentCars by remember { mutableStateOf<MutableSet<DocumentReference>>(mutableSetOf()) }
     val checked = remember {
         mutableStateOf(false)
     }
-    val dateFormat = SimpleDateFormat("dd/MM/yyyy")
+    val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault())
 
     if (showModal.value) {
-        if (failureMessage.value.isNullOrEmpty()) {
+        if (failureMessage.value.isEmpty()) {
             Dialog(onDismissRequest = { showModal.value = false }) {
                 Card(
                     modifier = Modifier
@@ -125,7 +127,7 @@ fun BookRentScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Button(
-                    enabled = enableSend.value,
+                    enabled = selectedRentCars.isNotEmpty(),
                     onClick = {
                         enableSend.value = false
                         val user = User(
@@ -134,7 +136,8 @@ fun BookRentScreen(
                             location = viewModel.location.value
                         )
 
-                        viewModel.sendData(user, selectedRentCars,
+                        viewModel.sendData(
+                            user, selectedRentCars,
                             onSuccess = {
                                 showModal.value = true
                             },
@@ -248,9 +251,9 @@ fun BookRentScreen(
                                                 checked = checked.value,
                                                 onCheckedChange = {
                                                     selectedRentCars =
-                                                        if (it) selectedRentCars.plus(key) as MutableSet<String> else selectedRentCars.minus(
+                                                        if (it) selectedRentCars.plus(key) as MutableSet<DocumentReference> else selectedRentCars.minus(
                                                             key
-                                                        ) as MutableSet<String>
+                                                        ) as MutableSet<DocumentReference>
                                                 },
                                                 // null recommended for accessibility with screenreaders
                                             )

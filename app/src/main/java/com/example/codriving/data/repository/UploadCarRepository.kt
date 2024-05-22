@@ -192,22 +192,24 @@ class UploadCarRepository @Inject constructor(
 
     }
 
-    suspend fun getRentsByCar(listDocument: List<DocumentReference?>): HashMap<String, RentCars> {
+    suspend fun getRentsByCar(listDocument: List<DocumentReference?>): HashMap<DocumentReference, RentCars> {
 
-        val rentCarsMap = hashMapOf<String, RentCars>()
+        val rentCarsMap = hashMapOf<DocumentReference, RentCars>()
 
         for (rentCarRef in listDocument) {
             val rentCarDocument = rentCarRef!!.get().await()
-            val documentId = rentCarDocument.id  // Get the document ID as the key
+            val documentId = rentCarDocument  // Get the document ID as the key
 
             val rentCar = RentCars(
                 carId = rentCarDocument["carId"] as DocumentReference,
                 ownerName = rentCarDocument["ownerName"] as String,
                 pricePerDay = rentCarDocument["pricePerDay"] as Double,
                 startDate = rentCarDocument["startDate"] as Timestamp,
-                endDate = rentCarDocument["endDate"] as Timestamp
+                endDate = rentCarDocument["endDate"] as Timestamp,
+                busy = rentCarDocument["busy"] as Boolean
             )
-            rentCarsMap[documentId] = rentCar  // Add RentCar to map with document ID as key
+            rentCarsMap[documentId.reference] =
+                rentCar  // Add RentCar to map with document ID as key
         }
 
 
@@ -269,6 +271,25 @@ class UploadCarRepository @Inject constructor(
 
         } catch (e: Exception) {
             throw UserRepositoryException("Error al crear el usuario: ${e.message}", e)
+        }
+    }
+
+    suspend fun getCarRentByReference(ref: DocumentReference): RentCars? {
+        val documentSnapshot = ref.get().await()
+        if (documentSnapshot != null && documentSnapshot.exists()) {
+
+            val rentCar = RentCars(
+                carId = documentSnapshot["carId"] as DocumentReference,
+                ownerName = documentSnapshot["ownerName"] as String,
+                pricePerDay = documentSnapshot["pricePerDay"] as Double,
+                startDate = documentSnapshot["startDate"] as Timestamp,
+                endDate = documentSnapshot["endDate"] as Timestamp,
+                busy = documentSnapshot["busy"] as Boolean
+            )
+            return rentCar
+
+        } else {
+            return null
         }
     }
 

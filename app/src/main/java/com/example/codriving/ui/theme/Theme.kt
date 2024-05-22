@@ -37,6 +37,7 @@ private val DarkColors = darkColorScheme(
     outlineVariant = md_theme_dark_outlineVariant,
     scrim = md_theme_dark_scrim,
 
+
     )
 
 private val LightColors = lightColorScheme(
@@ -93,7 +94,7 @@ fun CoDrivingTheme(
     }
 
     MaterialTheme(
-        colorScheme = DarkColors,
+        colorScheme = colors,
         content = content
     )
 }

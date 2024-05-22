@@ -32,25 +32,8 @@ class UserRepository @Inject constructor(
         }
     }
 
-    suspend fun getName(uid: String): String {
-        val db = FirebaseFirestore.getInstance()
-        val userDocument = db.collection("Users").document(uid)
 
-        var fullName = ""
-
-        userDocument.get().addOnSuccessListener { document ->
-            if (document.exists()) {
-                fullName = document.getString("fullName").toString()
-            } else {
-                Log.e(TAG, "El usuario no existe")
-            }
-        }
-
-        return fullName
-
-    }
-
-    suspend fun getUserReferenceById(userId: String): DocumentReference {
+    fun getUserReferenceById(userId: String): DocumentReference {
         return firestore.collection("Users").document(userId)
     }
 
@@ -84,10 +67,11 @@ class UserRepository @Inject constructor(
     }
 
     fun productNotify(
-        user: User,
+        message: String,
         productId: String,
-        rentsCar: MutableSet<String>,
-        ownerId: String,
+        rentsCar: MutableSet<DocumentReference>,
+        type: Int? = 1,
+        idReceiver: String,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
@@ -97,13 +81,13 @@ class UserRepository @Inject constructor(
         val notifyProductInfo = Notification(
             idNotification = notificationId,
             idProduct = productId,
-            idReceiver = ownerId,
+            idReceiver = idReceiver,
             idSender = auth.currentUser!!.uid,
             rentsCars = rentsCar.toList(),
             title = "Tiene una nueva solicitud",
-            message = "${user.fullName} esta interesado es tu coche ",
+            message = message,
             timestamp = Timestamp(Date()),
-            type = 1
+            type = type ?: 1
         )
         notificationCarCollection
             .add(notifyProductInfo)
@@ -130,8 +114,95 @@ class UserRepository @Inject constructor(
         }
     }
 
-    fun removeNotify(it: Notification) {
 
+    fun removeNotifyType1(
+        it: Notification,
+        cause: String?,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        try {
+            val collectionRef = FirebaseFirestore.getInstance().collection("carNotifications")
+
+            val query = collectionRef.whereEqualTo(
+                "idNotification",
+                it.idNotification
+            )
+            query.get().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Itera sobre los resultados (debería ser solo uno)
+                    for (document in task.result!!) {
+                        // Borra el documento utilizando la referencia
+                        document.reference.delete()
+                            .addOnSuccessListener {
+                                // Éxito al borrar el documento
+                                Log.d(TAG, "DocumentSnapshot successfully deleted!")
+                            }
+                            .addOnFailureListener { e ->
+                                // Error al borrar el documento
+                                Log.w(TAG, "Error deleting document", e)
+                            }
+                    }
+                } else {
+                    // Error al ejecutar la consulta
+                    Log.d(TAG, "Error getting documents: ", task.exception)
+                }
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error removing notification: ${e.message}", e)
+            throw UserRepositoryException("Error removing notification: ${e.message}", e)
+        }
+
+        //Comprobamos si era una solicitud y enviamos un mensaje de respuesta
+        if (it.type == 1) {
+            val auxNotify = it
+            auxNotify.type = 2
+            productNotify(
+                cause!!,
+                auxNotify.idProduct!!,
+                auxNotify.rentsCars.toMutableSet(),
+                auxNotify.type,
+                auxNotify.idSender,
+                onSuccess = onSuccess,
+                onFailure = onFailure
+            )
+        }
+    }
+
+    fun removeNotifyType2(it: Notification) {
+        try {
+            val collectionRef = FirebaseFirestore.getInstance().collection("carNotifications")
+
+            val query = collectionRef.whereEqualTo(
+                "idNotification",
+                it.idNotification
+            )
+            query.get().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Itera sobre los resultados (debería ser solo uno)
+                    for (document in task.result!!) {
+                        // Borra el documento utilizando la referencia
+                        document.reference.delete()
+                            .addOnSuccessListener {
+                                // Éxito al borrar el documento
+                                Log.d(TAG, "DocumentSnapshot successfully deleted!")
+                            }
+                            .addOnFailureListener { e ->
+                                // Error al borrar el documento
+                                Log.w(TAG, "Error deleting document", e)
+                            }
+                    }
+                } else {
+                    // Error al ejecutar la consulta
+                    Log.d(TAG, "Error getting documents: ", task.exception)
+                }
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error removing notification: ${e.message}", e)
+            throw UserRepositoryException("Error removing notification: ${e.message}", e)
+        }
     }
 
     // Otras funciones relacionadas con operaciones de usuario si es necesario
