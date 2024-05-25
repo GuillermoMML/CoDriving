@@ -87,7 +87,7 @@ class UserRepository @Inject constructor(
             title = "Tiene una nueva solicitud",
             message = message,
             timestamp = Timestamp(Date()),
-            type = type ?: 1
+            type = type ?: 2
         )
         notificationCarCollection
             .add(notifyProductInfo)
@@ -114,46 +114,40 @@ class UserRepository @Inject constructor(
         }
     }
 
+    suspend fun removeNotify(notify: Notification) {
+        val collectionRef = FirebaseFirestore.getInstance().collection("carNotifications")
 
-    fun removeNotifyType1(
+        val query = collectionRef.whereEqualTo(
+            "idNotification",
+            notify.idNotification.toString()
+        )
+        try {
+            val task = query.get().await()
+            for (document in task.documents) {
+                // Borra el documento utilizando la referencia
+                document.reference.delete()
+                    .addOnSuccessListener {
+                        // Éxito al borrar el documento
+                        Log.d(TAG, "DocumentSnapshot successfully deleted!")
+                    }
+                    .addOnFailureListener { e ->
+                        // Error al borrar el documento
+                        Log.w(TAG, "Error deleting document", e)
+                    }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error removing notification: ${e.message}", e)
+            throw UserRepositoryException("Error removing notification: ${e.message}", e)
+        }
+    }
+
+    suspend fun removeNotifyType1(
         it: Notification,
         cause: String?,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
-        try {
-            val collectionRef = FirebaseFirestore.getInstance().collection("carNotifications")
-
-            val query = collectionRef.whereEqualTo(
-                "idNotification",
-                it.idNotification
-            )
-            query.get().addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    // Itera sobre los resultados (debería ser solo uno)
-                    for (document in task.result!!) {
-                        // Borra el documento utilizando la referencia
-                        document.reference.delete()
-                            .addOnSuccessListener {
-                                // Éxito al borrar el documento
-                                Log.d(TAG, "DocumentSnapshot successfully deleted!")
-                            }
-                            .addOnFailureListener { e ->
-                                // Error al borrar el documento
-                                Log.w(TAG, "Error deleting document", e)
-                            }
-                    }
-                } else {
-                    // Error al ejecutar la consulta
-                    Log.d(TAG, "Error getting documents: ", task.exception)
-                }
-            }
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error removing notification: ${e.message}", e)
-            throw UserRepositoryException("Error removing notification: ${e.message}", e)
-        }
-
+        removeNotify(it)
         //Comprobamos si era una solicitud y enviamos un mensaje de respuesta
         if (it.type == 1) {
             val auxNotify = it
@@ -170,45 +164,39 @@ class UserRepository @Inject constructor(
         }
     }
 
-    fun removeNotifyType2(it: Notification) {
-        try {
-            val collectionRef = FirebaseFirestore.getInstance().collection("carNotifications")
-
-            val query = collectionRef.whereEqualTo(
-                "idNotification",
-                it.idNotification
-            )
-            query.get().addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    // Itera sobre los resultados (debería ser solo uno)
-                    for (document in task.result!!) {
-                        // Borra el documento utilizando la referencia
-                        document.reference.delete()
-                            .addOnSuccessListener {
-                                // Éxito al borrar el documento
-                                Log.d(TAG, "DocumentSnapshot successfully deleted!")
-                            }
-                            .addOnFailureListener { e ->
-                                // Error al borrar el documento
-                                Log.w(TAG, "Error deleting document", e)
-                            }
-                    }
-                } else {
-                    // Error al ejecutar la consulta
-                    Log.d(TAG, "Error getting documents: ", task.exception)
-                }
-            }
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error removing notification: ${e.message}", e)
-            throw UserRepositoryException("Error removing notification: ${e.message}", e)
-        }
-    }
 
     // Otras funciones relacionadas con operaciones de usuario si es necesario
     companion object {
         private const val TAG = "UserRepository"
     }
+
+    suspend fun acceptNotify(
+        removeNotify: Notification,
+        message: String,
+        productId: String,
+        rentsCar: MutableSet<DocumentReference>,
+        idReceiver: String,
+    ) {
+        val notificationCarCollection = firestore.collection("carNotifications")
+        val notificationId = notificationCarCollection.document().id
+
+        val notifyProductInfo = Notification(
+            idNotification = notificationId,
+            idProduct = productId,
+            idReceiver = idReceiver,
+            idSender = auth.currentUser!!.uid,
+            rentsCars = rentsCar.toList(),
+            title = "Tiene una nueva solicitud",
+            message = message,
+            timestamp = Timestamp(Date()),
+            type = 3
+        )
+        notificationCarCollection
+            .add(notifyProductInfo)
+
+        removeNotify(notify = removeNotify)
+    }
+
 }
 
 class UserRepositoryException(message: String, cause: Throwable?) : Exception(message, cause)

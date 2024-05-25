@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,9 +30,11 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandCircleDown
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -84,6 +87,7 @@ import com.example.codriving.data.model.Notification
 import com.example.codriving.data.model.RequestNotification
 import com.example.codriving.screens.MyCars.LoadScreen
 import com.google.firebase.firestore.DocumentReference
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -116,9 +120,12 @@ fun notificationView(
         mutableStateOf(false)
     }
     val currentNotify = viewModel.currentNotifies.observeAsState()
-    val info = viewModel.infoMessage.observeAsState()
     val context = LocalContext.current
-
+    val startDates = viewModel.startDates.observeAsState()
+    val endDates = viewModel.endDates.observeAsState()
+    var loadingInfo by remember {
+        mutableStateOf(true)
+    }
 
     Scaffold(
         snackbarHost = {
@@ -128,17 +135,19 @@ fun notificationView(
             HeaderPopBack(navController = navController)
         },
         content = {
+
             if (showInfoDialog.value) {
                 LaunchedEffect(key1 = currentNotify) {
                     viewModel.getRentsString()
+                    loadingInfo = false
                 }
                 BasicAlertDialog(
                     onDismissRequest = {
                         showInfoDialog.value = false
-                        viewModel.setInfoMessage()
+                        loadingInfo = true
                     },
                 ) {
-                    if (info.value.equals("")) {
+                    if (loadingInfo) {
                     } else {
                         Card(
                             modifier = Modifier
@@ -152,11 +161,15 @@ fun notificationView(
                                     text = "Dias de alquiler",
                                     textAlign = TextAlign.Center
                                 )
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = info.value!!,
-                                    textAlign = TextAlign.Center
-                                )
+                                startDates.value!!.toList().zip(endDates.value!!.toList())
+                                    .forEach { (startDate, endDate) ->
+                                        Text(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            text = "$startDate - $endDate\n",
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+
                             }
 
                         }
@@ -189,16 +202,22 @@ fun notificationView(
                                 userNotification,
                                 onShowInfo = {
                                     showInfoDialog.value = true
-                                    viewModel.setCurretNotify(it)
+                                    viewModel.setCurrentRentsNotify(it)
                                 },
                                 onConfirm = {
-                                    scope.launch {
 
+                                    scope.launch {
                                         try {
                                             // Llama al método en el ViewModel para generar el PDF
-                                            val file = viewModel.generateModelPDF(context)
+
+                                            val file = viewModel.generateModelPDF(context, it)
+
                                             // Muestra un mensaje de éxito después de generar el PDF
                                             if (!file.isNullOrEmpty()) {
+                                                viewModel.acceptNotify(
+                                                    "Se acepto el servicio con exito",
+                                                    it
+                                                )
                                                 val result = snackbarHostState
                                                     .showSnackbar(
                                                         message = "Se generó el contrato",
@@ -235,7 +254,6 @@ fun notificationView(
                                                 snackbarHostState.showSnackbar("Error al generar el pdf")
 
                                             }
-
                                         } catch (e: Exception) {
                                             // En caso de error, muestra un mensaje de error
                                             snackbarHostState.showSnackbar("Error al generar el contrato ${e.message}")
@@ -247,11 +265,13 @@ fun notificationView(
                                 onDelete = {
                                     if (it.type == 1) {
                                         showDialogCancel.value = true
-                                        viewModel.removeNotify(it, 1)
-
+                                        viewModel.setCurrentNotify(it)
                                     } else {
-                                        viewModel.removeNotify(it, 2)
+                                        viewModel.setCurrentNotify(it)
+                                        scope.launch {
+                                            viewModel.removeNotify("")
 
+                                        }
                                     }
 
                                 })
@@ -271,16 +291,16 @@ fun notificationView(
                                 notificationLastWeek.value, userNotification,
                                 onShowInfo = {
                                     showInfoDialog.value = true
-                                    viewModel.setCurretNotify(it)
+                                    viewModel.setCurrentRentsNotify(it)
                                 },
                                 onConfirm = {},
                                 onDelete = {
                                     if (it.type == 1) {
                                         showDialogCancel.value = true
-                                        viewModel.removeNotify(it, 1)
+                                        viewModel.setCurrentNotify(it)
 
                                     } else {
-                                        viewModel.removeNotify(it, 2)
+                                        viewModel.setCurrentNotify(it)
 
                                     }
 
@@ -306,6 +326,7 @@ fun notificationView(
 
     if (showDialogCancel.value) {
         modalCancelNotify(
+            scope,
             viewModel = viewModel,
             onDismissRequest = { showDialogCancel.value = false }) {
             showDialogCancel.value = false
@@ -350,7 +371,7 @@ fun BasicDialog(
 
             ) {
                 Icon(
-                    Icons.Default.Cancel,
+                    Icons.Default.ExpandCircleDown,
                     contentDescription = null,
                     Modifier.padding(20.dp)
                 )
@@ -381,6 +402,7 @@ fun BasicDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun modalCancelNotify(
+    scope: CoroutineScope,
     viewModel: NotificationViewModel,
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit
@@ -425,16 +447,18 @@ fun modalCancelNotify(
                     TextButton(
                         modifier = Modifier.padding(5.dp),
                         onClick = {
-                            viewModel.removeNotify(cancelCauseText.text)
-                            viewModel.removeNotify(Notification(), 0)
-                            onConfirm()
+                            scope.launch {
+                                var message: String? = null
+                                if (cancelCauseText.text.isEmpty()) message =
+                                    "Se canceló la petición" else cancelCauseText.text
+                                viewModel.removeNotify(message)
+                                onConfirm()
+                            }
                         }) {
                         Text(text = "Aceptar")
                     }
                     TextButton(modifier = Modifier.padding(5.dp), onClick = {
-                        viewModel.removeNotify(Notification(), 0)
                         onDismissRequest()
-
                     }) {
                         Text(text = "Cancelar")
                     }
@@ -464,7 +488,7 @@ fun ListNotifies(
                         1 -> {
                             userNotifyItem(
                                 notify = it,
-                                userNotification = userNotification.value!![it.idSender]!!,
+                                userNotification = userNotification.value!![it.idNotification]!!,
                                 onCancel = { onDelete(it) },
                                 onShowInfo = { onShowInfo(it.rentsCars) },
                                 onConfirm = { onConfirm(it) }
@@ -481,10 +505,26 @@ fun ListNotifies(
                             ) { notify ->
                                 infoNotify(
                                     notify = notify,
-                                    userNotification = userNotification.value!![it.idSender]!!,
+                                    userNotification = userNotification.value!![it.idNotification]!!,
                                     onCancel = { onDelete(notify) }
                                 )
                             }
+                        }
+
+                        3 -> {
+                            SwipeToDeleteContainer(
+                                item = it,
+                                onDelete = {
+                                    onDelete(it)
+                                }
+                            ) { notify ->
+                                infoNotify(
+                                    notify = notify,
+                                    userNotification = userNotification.value!![it.idNotification]!!,
+                                    onCancel = { onDelete(notify) }
+                                )
+                            }
+
                         }
                     }
                     HorizontalDivider()
@@ -499,7 +539,7 @@ fun ListNotifies(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No se encontro ninguna notificación",
+                    text = "No se encontró ninguna notificación",
                     textAlign = TextAlign.Center
                 )
             }
@@ -514,8 +554,7 @@ fun infoNotify(
     userNotification: RequestNotification,
     onCancel: (Notification) -> Unit
 ) {
-    val user = userNotification.user
-    val car = userNotification.car
+    val message = if (notify.type == 3) "Se acepto con exito" else notify.message
     var imageProfile = ""
     var isRemoved by remember {
         mutableStateOf(false)
@@ -527,9 +566,9 @@ fun infoNotify(
     }
 
     ListItem(
-        headlineContent = { Text(user.fullName.toString()) },
+        headlineContent = { Text(message!!) },
         supportingContent = {
-            Text(notify.message.toString())
+            Text(message!!)
         },
         leadingContent = {
             Box(
@@ -541,7 +580,6 @@ fun infoNotify(
             ) {
                 imageProfile =
                     "https://static-00.iconduck.com/assets.00/profile-default-icon-2048x2045-u3j7s5nj.png"
-
 
                 Image(
                     painter = rememberAsyncImagePainter(
@@ -559,12 +597,27 @@ fun infoNotify(
             }
         },
         trailingContent = {
-            Column(modifier = Modifier.width(100.dp)) {
+            Column(
+                modifier = Modifier
+                    .width(100.dp)
+                    .fillMaxHeight()
+            ) {
                 Text(
                     "${formatDateToDayMonthYear(notify.timestamp!!.toDate())}",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (notify.type == 3) {
+                    Box(modifier = Modifier.align(Alignment.End)) {
+                        IconButton(
+                            onClick = {}
+                        ) {
+                            Icon(Icons.Default.Archive, contentDescription = "Info")
+                        }
+                    }
+
+                }
+
             }
         }
     )
@@ -648,14 +701,17 @@ fun userNotifyItem(
                             Icons.Default.Check, contentDescription = null,
                         )
                     }
-                    IconButton(
-                        onClick = { onCancel(notify) },
-                    ) {
-                        Icon(
-                            Icons.Default.Cancel,
-                            contentDescription = null,
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                        IconButton(
+                            onClick = { onCancel(notify) },
+                        ) {
+                            Icon(
+                                Icons.Default.Cancel,
+                                contentDescription = null,
 
-                            )
+                                )
+                        }
+
                     }
                 }
                 Box(modifier = Modifier.align(Alignment.End)) {

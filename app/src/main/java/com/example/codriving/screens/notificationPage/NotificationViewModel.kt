@@ -11,7 +11,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.codriving.common.generatefilePathPDF
 import com.example.codriving.data.model.Notification
+import com.example.codriving.data.model.RentCars
 import com.example.codriving.data.model.RequestNotification
+import com.example.codriving.data.repository.FirebaseStorageRepository
 import com.example.codriving.data.repository.UploadCarRepository
 import com.example.codriving.data.repository.UserRepository
 import com.google.firebase.Timestamp
@@ -25,26 +27,29 @@ import javax.inject.Inject
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val uploadCarRepository: UploadCarRepository
+    private val uploadCarRepository: UploadCarRepository,
+    private val firebaseStorageRepository: FirebaseStorageRepository
 ) :
     ViewModel() {
 
     private val _notificationsThisWeek = MutableLiveData<MutableList<Notification>>(mutableListOf())
     private val _notificationsLastWeek = MutableLiveData<MutableList<Notification>>(mutableListOf())
+    private val _startDates = MutableLiveData<MutableList<String>>(mutableListOf())
+    private val _endDates = MutableLiveData<MutableList<String>>(mutableListOf())
     private val _usersNotifications = MutableLiveData<HashMap<String, RequestNotification>>()
-    private var currentNotify = Notification()
-    private var typeWeek = 0
+    private val _isLoading = MutableLiveData(true)
     private val _error = MutableLiveData("")
-    private val _infoMessage = MutableLiveData("")
 
+
+    private var currentNotify = Notification()
     private val _currentNotifies = MutableLiveData<MutableList<DocumentReference>>(mutableListOf())
     val error: LiveData<String> get() = _error
-    val infoMessage: LiveData<String> get() = _infoMessage
-
     var resfresh by mutableStateOf(false)
-    private val _isLoading = MutableLiveData(true)
     val notificationsThisWeek: LiveData<MutableList<Notification>> get() = _notificationsThisWeek
     val notificationsLastWeek: LiveData<MutableList<Notification>> get() = _notificationsLastWeek
+    val startDates: LiveData<MutableList<String>> get() = _startDates
+    val endDates: LiveData<MutableList<String>> get() = _endDates
+
     val userNotification: LiveData<HashMap<String, RequestNotification>> get() = _usersNotifications
 
     val currentTime = Timestamp.now()
@@ -55,14 +60,12 @@ class NotificationViewModel @Inject constructor(
 
     init {
 
-
         viewModelScope.launch {
             getNotifications()
         }
 
 
     }
-
 
 
     private suspend fun getUserByNotification(notification: Notification) {
@@ -72,7 +75,8 @@ class NotificationViewModel @Inject constructor(
 
         if (user != null) {
             _usersNotifications.value = _usersNotifications.value ?: HashMap()
-            _usersNotifications.value!![notification.idSender] = RequestNotification(car, user)
+            _usersNotifications.value!![notification.idNotification.toString()] =
+                RequestNotification(car, user)
         }
     }
 
@@ -112,38 +116,76 @@ class NotificationViewModel @Inject constructor(
     }
 
 
-    fun removeNotify(cause: String?) {
+    suspend fun removeNotify(cause: String?, notSendMessage: Boolean? = false) {
+        // Iterar usando un iterador explícito
+        val iteratorThisWeek = _notificationsThisWeek.value!!.iterator()
+        while (iteratorThisWeek.hasNext()) {
+            val notification = iteratorThisWeek.next()
+            if (notification.idNotification == currentNotify.idNotification) {
+                if (currentNotify.type == 2 || currentNotify.type == 0) {
+                    userRepository.removeNotify(currentNotify)
+                } else {
+                    if (notSendMessage == true) {
+                        userRepository.removeNotify(currentNotify)
+                    } else {
+                        userRepository.removeNotifyType1(
+                            currentNotify,
+                            cause,
+                            onSuccess = { Log.d("Success", "Existo al borrar") },
+                            onFailure = { _error.value = it }
+                        )
 
-        if (currentNotify != Notification()) {
-            _isLoading.value = true
-            if (typeWeek == 1) {
-                userRepository.removeNotifyType1(
-                    currentNotify,
-                    cause,
-                    onSuccess = { Log.d("Sucess", "Existo al borrar") },
-                    onFailure = { _error.value = it })
-                _notificationsThisWeek.value!!.remove(currentNotify)
-            } else if (typeWeek == 2) {
-                userRepository.removeNotifyType2(currentNotify)
-                _notificationsLastWeek.value!!.remove(currentNotify)
+                    }
+                }
 
+                iteratorThisWeek.remove()
             }
-
-        } else {
-            _error.value = "No se encontró la notificación"
-
         }
-        _isLoading.value = false
 
+        // Iterar usando un iterador explícito para la otra lista
+        val iteratorLastWeek = _notificationsLastWeek.value!!.iterator()
+        while (iteratorLastWeek.hasNext()) {
+            val notification = iteratorLastWeek.next()
+            if (notification.idNotification == currentNotify.idNotification) {
+                if (currentNotify.type == 2) {
+                    userRepository.removeNotify(currentNotify)
+                } else {
+                    userRepository.removeNotifyType1(
+                        currentNotify,
+                        cause,
+                        onSuccess = { Log.d("Success", "Existo al borrar") },
+                        onFailure = { _error.value = it }
+                    )
+
+                }
+
+                iteratorLastWeek.remove()
+            }
+        }
+    }
+
+    suspend fun acceptNotify(cause: String?, notify: Notification) {
+        try {
+            userRepository.acceptNotify(
+                removeNotify = notify,
+                cause!!.toString(),
+                notify.idProduct!!,
+                notify.rentsCars.toMutableSet(),
+                notify.idSender,
+            )
+            notify.rentsCars.forEach {
+                uploadCarRepository.busyRentCar(it)
+            }
+            setCurrentNotify(notify)
+            removeNotify("", true)
+        } catch (e: Exception) {
+            _error.value = e.message
+        }
     }
 
 
-    fun removeNotify(it: Notification, i: Int) {
-        typeWeek = i
+    fun setCurrentNotify(it: Notification) {
         currentNotify = it
-        if (typeWeek == 2) {
-            removeNotify("")
-        }
     }
 
     fun setError() {
@@ -153,28 +195,45 @@ class NotificationViewModel @Inject constructor(
     suspend fun getRentsString() {
         val formatter = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault())
 
-        // formatter.format(date)
+        val startDates = mutableListOf<String>()
+        val endDates = mutableListOf<String>()
 
-        var message = ""
         _currentNotifies.value!!.forEach {
             val rent = uploadCarRepository.getCarRentByReference(it)
-            message += (rent?.startDate?.toDate()?.let { it1 -> formatter.format(it1) })
-            message += " " + (rent?.endDate?.toDate()?.let { it1 -> formatter.format(it1) }) + "\n"
+            rent?.startDate?.toDate()?.let { it1 -> startDates.add(formatter.format(it1)) }
+            rent?.endDate?.toDate()?.let { it1 -> endDates.add(formatter.format(it1)) }
         }
-        _infoMessage.value = message
-
+        _startDates.value = startDates
+        _endDates.value = endDates
     }
 
-    fun setCurretNotify(list: List<DocumentReference>) {
+
+    fun setCurrentRentsNotify(list: List<DocumentReference>) {
         _currentNotifies.value = list.toMutableList()
     }
 
-    fun setInfoMessage(input: String? = "") {
-        _infoMessage.value = input
+
+    suspend fun generateModelPDF(context: Context, notify: Notification): String? {
+        val owner = userRepository.getUserById(notify.idReceiver.toString())!!
+        val client = userNotification.value!![notify.idNotification]!!.user
+        val car = userNotification.value!![notify.idNotification]!!.car
+        val listOfRents = mutableListOf<RentCars>()  // Inicializa la lista mutable
+        notify.rentsCars.forEach {
+            val rentCar = uploadCarRepository.getCarRentByReference(it)
+            if (rentCar != null) {
+                listOfRents.add(rentCar)  // Agrega el elemento a la lista
+            }
+        }
+
+        val auxPDF = generatefilePathPDF(context, owner, client, car, listOfRents)
+
+        if (auxPDF != null) {
+            uploadPDFStorage(auxPDF, notify)
+        }
+        return auxPDF
     }
 
-    fun generateModelPDF(context: Context): String? {
-
-        return generatefilePathPDF(context)
+    private fun uploadPDFStorage(auxPDF: String, notify: Notification) {
+        firebaseStorageRepository.uploadPDF(auxPDF, notify)
     }
 }

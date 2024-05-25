@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.codriving.data.model.Car
 import com.example.codriving.data.model.RentCars
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
@@ -18,6 +19,15 @@ import javax.inject.Inject
 class UploadCarRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
 ) {
+
+
+    fun busyRentCar(documentReference: DocumentReference) {
+        try {
+            Tasks.await(documentReference.update("busy", true))
+        } catch (e: Exception) {
+            throw e  // Lanza la excepción para que sea manejada por el llamador
+        }
+    }
 
     suspend fun getModelsByMark(marca: String): List<String> {
         val modelos = mutableListOf<String>()
@@ -296,6 +306,24 @@ class UploadCarRepository @Inject constructor(
     suspend fun getCarPrice(rentRef: DocumentReference): String {
         val rentCarDocument = rentRef.get().await()
         return rentCarDocument["pricePerDay"] as String
+    }
+
+    suspend fun createDeal(car: Car) {
+        val auth = FirebaseAuth.getInstance().uid
+        try {
+            val carDocRef = firestore.collection("Cars").document()
+            carDocRef.set(car)
+                .await()
+            //Referencia user
+            val userDocRef = firestore.collection("Users")
+                .document(auth!!)
+            // Agrega el ID del carro recién creado a la lista en el documento del usuario
+            userDocRef.update("cars", FieldValue.arrayUnion(carDocRef.id))
+                .await()
+            // Operación exitosa
+        } catch (e: Exception) {
+            throw UserRepositoryException("Error al crear el usuario: ${e.message}", e)
+        }
     }
 }
 
