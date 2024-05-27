@@ -132,7 +132,7 @@ fun notificationView(
             SnackbarHost(hostState = snackbarHostState)
         },
         topBar = {
-            HeaderPopBack(navController = navController)
+            HeaderPopBack(navController = navController, "Notifications")
         },
         content = {
 

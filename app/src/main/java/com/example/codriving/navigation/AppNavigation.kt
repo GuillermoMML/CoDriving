@@ -11,6 +11,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.codriving.screens.BookRent.BookRentScreen
 import com.example.codriving.screens.BookRent.BookRentViewModel
+import com.example.codriving.screens.Chat.ChatViewModel
+import com.example.codriving.screens.Chat.ConversationScreen
+import com.example.codriving.screens.Chat.ConversationsViewModel
+import com.example.codriving.screens.Chat.chatScreen
 import com.example.codriving.screens.HomePage.HomePage
 import com.example.codriving.screens.LoginPage.ui.LoginScreen
 import com.example.codriving.screens.LoginPage.ui.LoginViewModel
@@ -29,7 +33,6 @@ fun AppNavigation(
     auth: FirebaseAuth,
     isLogged: () -> Unit
 ) {
-
 
     NavHost(navController = navController, startDestination = AppScreens.LoginScreen.route) {
         composable(route = AppScreens.HomeScreen.route) {
@@ -121,6 +124,28 @@ fun AppNavigation(
 
         composable(AppScreens.NotificationScreen.route) {
             notificationView(navController = navController)
+        }
+
+        composable(AppScreens.ConversationScreen.route) {
+            val conversationsViewModel: ConversationsViewModel = hiltViewModel()
+            ConversationScreen(navController = navController, conversationsViewModel)
+        }
+
+        composable(
+            AppScreens.ChatScreen.route + "/{conversationId}",
+            arguments = listOf(navArgument("conversationId") {
+                type = NavType.StringType; nullable = false
+            })
+        ) { navBackStackEntry ->
+            val chatViewModel: ChatViewModel = hiltViewModel()
+            val conversationId = navBackStackEntry.arguments?.getString("conversationId")
+            LaunchedEffect(conversationId) {
+                conversationId?.let {
+                    chatViewModel.fetchMessages(it)
+                }
+            }
+            chatScreen(navController = navController, chatViewModel)
+
         }
 
 

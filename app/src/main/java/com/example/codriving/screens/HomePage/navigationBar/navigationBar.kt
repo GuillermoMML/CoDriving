@@ -42,6 +42,9 @@ fun navigationBar(navController: NavController) {
                     if (index == 1) { // Check if it's the "Rentals" item (index 1)
                         navController.navigate(AppScreens.ListMyCarsScreen.route)
                     }
+                    if (index == 2) {
+                        navController.navigate(AppScreens.ConversationScreen.route)
+                    }
                     if (index == 3) {
                         navController.navigate(AppScreens.NotificationScreen.route)
                     } else {

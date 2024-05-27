@@ -15,12 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.Card
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Textsms
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,11 +29,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.codriving.data.model.Car
+import com.example.codriving.data.model.Conversations
+import com.example.codriving.data.model.Message
 import com.example.codriving.screens.RentCar.RatingBar
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 
 @Composable
-fun itemCarView(car: Car, onClickItem: (Boolean) -> Unit) {
+fun itemCarView(car: Car, onClickItem: (Boolean) -> Unit, onMessage: (Car) -> Unit) {
+    val scope = rememberCoroutineScope()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -71,22 +81,40 @@ fun itemCarView(car: Car, onClickItem: (Boolean) -> Unit) {
                         horizontalArrangement = Arrangement.End
                     ) {
                         FloatingActionButton(
-                            onClick = { /* Acción del primer botón */ },
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .size(40.dp)
-                        ) {
-                            Icon(Icons.Default.Call, contentDescription = "Add", tint = Color.White)
-                        }
-                        FloatingActionButton(
-                            onClick = { /* Acción del segundo botón */ },
+                            onClick = {
+                                scope.launch {
+                                    val array = listOf(Firebase.auth.uid.toString(), car.owner!!.id)
+                                    val conversation = Conversations(
+                                        date = Timestamp(Date()),
+                                        lastMessage = null,
+                                        userIds = array
+                                    )
+                                    val message = Message(
+                                        message = "",
+                                        idSender = "",
+                                        type_message = 0,
+                                        date = Timestamp(Date())
+                                    )
+                                    val conversationRef =
+                                        Firebase.firestore.collection("conversations")
+                                            .add(conversation)
+
+                                    // Get the document reference for the newly created conversation
+                                    val docRef = conversationRef.await()
+                                    Firebase.firestore.collection("conversations")
+                                        .document(docRef.id).collection("messages").add(message)
+                                        .await()
+
+                                }
+                                onMessage(car)
+                            },
                             modifier = Modifier
                                 .padding(8.dp)
                                 .size(40.dp)
                         ) {
                             Icon(
-                                Icons.Default.Edit,
-                                contentDescription = "Edit",
+                                Icons.Default.Textsms,
+                                contentDescription = "Add",
                                 tint = Color.White
                             )
                         }

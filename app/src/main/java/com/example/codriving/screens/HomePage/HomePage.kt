@@ -265,9 +265,13 @@ fun HomePage(
                             topRatedCars.value?.let {
                                 it.forEach { (key, car) ->
                                     item {
-                                        itemCarView(car = car) { click ->
-                                            if (click) navController.navigate(AppScreens.RentCarScreen.route + "/${key}")
-                                        }
+                                        itemCarView(
+                                            car = car,
+                                            onMessage = {},
+                                            onClickItem = { click ->
+                                                if (click) navController.navigate(AppScreens.RentCarScreen.route + "/${key}")
+
+                                            })
                                     }
                                 }
                             } ?: item {

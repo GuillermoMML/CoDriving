@@ -117,7 +117,7 @@ fun BookRentScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            HeaderPopBack(navController = navController)
+            HeaderPopBack(navController = navController, "Rent a Car")
         },
         bottomBar = {
             Box(
@@ -284,20 +284,17 @@ fun BookRentScreen(
 
                             ImageUploadScreen(selectedImageUris) { uri ->
 
-                                if (uri != null) {
-                                    // Si hay resultados de la selección de imágenes
-                                    if (selectedImageUris.size < 2) {
-                                        // Si hay menos de dos imágenes seleccionadas, simplemente agregamos los nuevos resultados
-                                        selectedImageUris =
-                                            selectedImageUris.toMutableList().apply { add(uri) }
+                                if (selectedImageUris.size < 2) {
+                                    // Si hay menos de dos imágenes seleccionadas, simplemente agregamos los nuevos resultados
+                                    selectedImageUris =
+                                        selectedImageUris.toMutableList().apply { add(uri) }
 
-                                    } else {
-                                        // Si ya hay dos imágenes seleccionadas, las reemplazamos con los nuevos resultados
-                                        selectedImageUris = emptyList()
-                                        selectedImageUris =
-                                            selectedImageUris.toMutableList().apply { add(uri) }
+                                } else {
+                                    // Si ya hay dos imágenes seleccionadas, las reemplazamos con los nuevos resultados
+                                    selectedImageUris = emptyList()
+                                    selectedImageUris =
+                                        selectedImageUris.toMutableList().apply { add(uri) }
 
-                                    }
                                 }
                             }
 

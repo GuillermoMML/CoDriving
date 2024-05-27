@@ -54,6 +54,8 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.codriving.R
 import com.example.codriving.common.HeaderPopBack
+import com.example.codriving.data.model.Conversations
+import com.example.codriving.data.model.Message
 import com.example.codriving.data.model.RentCars
 import com.example.codriving.data.model.User
 import com.example.codriving.navigation.AppScreens
@@ -63,7 +65,13 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
@@ -98,7 +106,7 @@ fun RentCarScreen(
                 SnackbarHost(hostState = snackbarHostState)
             },
             topBar = {
-                HeaderPopBack(navController = navController)
+                HeaderPopBack(navController = navController, "Rent a Car")
             },
             bottomBar = {
                 //COntroling error data
@@ -126,7 +134,8 @@ fun RentCarScreen(
                             it.value?.let { it1 ->
                                 bodyRest(
                                     it1, car!!.rating, //car!!,
-                                    ownerUser.value?.fullName!!
+                                    ownerUser.value?.fullName!!,
+                                    car!!.owner!!.id
                                 ) {
                                     //rentCar es un car
                                     navController.navigate("${AppScreens.BookRentScreen.route}/${idRentCar}")
@@ -180,8 +189,10 @@ fun bodyRest(
     rentCars: List<RentCars>,
     rating: Double?,
     ownerUser: String = "",
+    car: String,
     onClickBook: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault())
     val ownerName = ownerUser
     val rentTimes = remember {
@@ -257,7 +268,31 @@ fun bodyRest(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = {
+                scope.launch(Dispatchers.IO) {
+                    val array = listOf(Firebase.auth.uid.toString(), car)
+                    val conversation = Conversations(
+                        date = Timestamp(Date()),
+                        lastMessage = null,
+                        userIds = array
+                    )
+                    val message = Message(
+                        message = "",
+                        idSender = "",
+                        type_message = 0,
+                        date = Timestamp(Date())
+                    )
+                    val conversationRef =
+                        Firebase.firestore.collection("conversations").add(conversation)
+
+                    // Get the document reference for the newly created conversation
+                    val docRef = conversationRef.await()
+                    Firebase.firestore.collection("conversations").document(docRef.id)
+                        .collection("messages").add(message).await()
+
+                }
+
+            }) {
                 Text(text = stringResource(R.string.contact_owner))
             }
             FilledTonalButton(onClick = {

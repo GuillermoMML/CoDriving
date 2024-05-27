@@ -94,7 +94,7 @@ fun CoDrivingTheme(
     }
 
     MaterialTheme(
-        colorScheme = colors,
+        colorScheme = LightColors,
         content = content
     )
 }
