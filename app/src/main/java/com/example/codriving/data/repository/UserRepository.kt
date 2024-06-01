@@ -1,7 +1,9 @@
 package com.example.codriving.data.repository
 
 import android.util.Log
+import com.example.codriving.data.model.Contracts
 import com.example.codriving.data.model.Notification
+import com.example.codriving.data.model.RequestContracts
 import com.example.codriving.data.model.User
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -9,6 +11,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import java.io.FileNotFoundException
 import java.util.Date
 import javax.inject.Inject
 
@@ -166,9 +169,6 @@ class UserRepository @Inject constructor(
 
 
     // Otras funciones relacionadas con operaciones de usuario si es necesario
-    companion object {
-        private const val TAG = "UserRepository"
-    }
 
     suspend fun acceptNotify(
         removeNotify: Notification,
@@ -197,7 +197,205 @@ class UserRepository @Inject constructor(
         removeNotify(notify = removeNotify)
     }
 
+    fun modifyUser(
+        fullName: String,
+        email: String,
+        phone: String,
+        location: String,
+        profileImage: String,
+        password: String,
+        onSuccess: (String) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val userUpdates = hashMapOf<String, Any>(
+            "fullName" to fullName,
+            "email" to email,
+            "phone" to phone,
+            "location" to location,
+            "imageProfile" to profileImage
+        )
+        auth.uid?.let {
+            firestore.collection("Users").document(it).update(
+                userUpdates
+            )
+                .addOnSuccessListener {
+                    if (password.isNotEmpty()) {
+                        updatePassword(
+                            password,
+                            onFailure = { onFailure(it) })
+
+                    } else {
+                        onSuccess("User updated successfully")
+                    }
+                }
+                .addOnFailureListener {
+                    onFailure(it)
+                }
+        }
+    }
+
+    fun updatePassword(newPassword: String, onFailure: (Exception) -> Unit) {
+        val user = auth.currentUser
+        user?.let {
+            if (newPassword.length >= 6) {
+                it.updatePassword(newPassword)
+                    .addOnCompleteListener { task ->
+                        if (!task.isSuccessful) {
+                            task.exception?.let { exception ->
+                                onFailure(exception)
+                            }
+                        }
+                    }
+            } else {
+                onFailure(Exception("Password must be at least 6 characters long"))
+            }
+        } ?: run {
+            onFailure(Exception("No authenticated user found"))
+        }
+    }
+
+    fun generateContract(lastEndDate: Timestamp, notification: Notification) {
+        val contract = Contracts(
+            idContracts = notification.idNotification!!,
+            idProduct = notification.idProduct!!,
+            idReceiver = notification.idReceiver!!,
+            idSender = notification.idSender,
+            timestamp = lastEndDate,
+            rentCars = notification.rentsCars
+        )
+        firestore.collection("Users").document(notification.idSender).collection("contracts")
+            .add(contract)
+        firestore.collection("Users").document(notification.idReceiver).collection("contracts")
+            .add(contract)
+
+    }
+
+    suspend fun getContractsByUser(
+        auth: String,
+        onSuccess: (List<Contracts>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val contracts = mutableListOf<Contracts>()  // Use a mutable list
+
+        try {
+            val docRef =
+                firestore.collection("Users").document(auth).collection("contracts").get().await()
+
+            docRef.forEach {
+                if (it.exists()) {
+                    contracts.add(it.toObject(Contracts::class.java))
+                }
+            }
+            if (contracts.isNotEmpty()) {
+                onSuccess(contracts.toList())
+
+            } else {
+                onFailure(throw FileNotFoundException("No se encontro ningun contrato"))
+            }
+        } catch (e: Exception) {
+            onFailure(
+                throw UserRepositoryException("Error al cargar contracto: ${e.message}", e)
+            )
+        }
+
+    }
+
+
+    fun addReviewService(
+        contract: RequestContracts,
+        review: String,
+        rating: Double,
+        onComplete: (String) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val newReview = hashMapOf(
+            "reviewSender" to auth.uid.toString(),
+            "comment" to review,
+            "rating" to rating
+        )
+        var resultMessage = "Comment Added"
+        var newRating: Double
+        var numberOfRating: Int
+        val carRef = contract.rentCars[0].carId
+
+        carRef.collection("reviews").document(newReview["reviewSender"].toString()).get()
+            .addOnSuccessListener {
+                if (it.exists()) {
+                    resultMessage = "You have already commented it"
+                    onComplete(resultMessage)
+                } else {
+                    carRef.get()
+                        .addOnSuccessListener {
+                            numberOfRating = it.getLong("numberOfReviews")!!.toInt() + 1
+                            newRating = (rating + it.getLong("rating")!!) / numberOfRating
+                            carRef.update("rating", newRating)
+                            carRef.update("numberOfReviews", numberOfRating)
+                                .addOnSuccessListener {
+                                    onComplete(resultMessage)
+                                    carRef.collection("reviews")
+                                        .document(newReview["reviewSender"].toString()).set(
+                                            newReview
+                                        )
+                                }
+                                .addOnFailureListener { e ->
+                                    resultMessage = e.message.toString()
+                                    onFailure(e)
+                                }
+
+
+                        }
+                        .addOnFailureListener {
+                            onFailure(it)
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+                resultMessage = e.message.toString()
+                onFailure(e)
+            }
+    }
+
+
+    /* carRef.collection("reviews").get().addOnSuccessListener { reviewsSnapshot ->
+         val sizeReview = reviewsSnapshot.size()
+         firestore.runTransaction { transaction ->
+             numberOfRating = reviewsSnapshot.size()
+             val snapshot = transaction.get(carRef)
+             carRef.get().addOnSuccessListener {
+                 val currentReviewsLong = it.getLong("numberOfReviews")!!.toInt()
+                 if (currentReviewsLong != 0) {
+                     if (currentReviewsLong == numberOfRating) {
+                         resultMessage = "You have already commented it"
+                         return@addOnSuccessListener
+                     }
+                 }
+                 if (currentReviewsLong == 0) {
+                     newRating = rating
+                     numberOfRating = 1
+                     return@addOnSuccessListener
+                 }
+                 val currentRating = snapshot.getDouble("rating") ?: 0.0
+                 newRating = (currentRating + rating) / sizeReview
+             }
+         }.addOnCompleteListener {
+             if (newRating != 0.0) {
+                 carRef.update("rating", newRating)
+                 carRef.update("numberOfReviews", numberOfRating)
+             }
+             onComplete(resultMessage)
+         }.addOnFailureListener { e ->
+             onFailure(e)
+         }
+
+     }*/
+
+
+    companion object {
+        private const val TAG = "UserRepository"
+    }
+
 
 }
+
 
 class UserRepositoryException(message: String, cause: Throwable?) : Exception(message, cause)

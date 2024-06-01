@@ -13,6 +13,7 @@ data class Car(
     var owner: DocumentReference? = null,
     val image: List<String> = emptyList(),
     val rating: Double? = 0.0,
-    val rentCars: List<DocumentReference?> = emptyList() // Campo de referencia a las RentCars
+    val rentCars: List<DocumentReference?> = emptyList(), // Campo de referencia a las RentCars
+    val numberOfReviews: Int = 0
 )
 

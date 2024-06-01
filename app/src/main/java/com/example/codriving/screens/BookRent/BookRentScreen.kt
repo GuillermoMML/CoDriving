@@ -133,7 +133,7 @@ fun BookRentScreen(
                         val user = User(
                             fullName = viewModel.name.value, email = viewModel.email.value,
                             phone = viewModel.phone.value,
-                            location = viewModel.location.value
+                            location = viewModel.location.value!!
                         )
 
                         viewModel.sendData(

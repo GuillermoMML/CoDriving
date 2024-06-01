@@ -8,4 +8,5 @@ interface FirebaseStorageRepository {
     fun uploadImage(imageUri: Uri): Task<Uri>
     fun uploadPDF(pdfPath: String, notification: Notification): Task<Uri>
 
+
 }

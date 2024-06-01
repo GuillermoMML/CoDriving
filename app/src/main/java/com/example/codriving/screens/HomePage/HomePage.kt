@@ -5,18 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
@@ -25,7 +21,6 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -33,7 +28,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -54,22 +48,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.codriving.R
 import com.example.codriving.common.contentModalSheet
 import com.example.codriving.common.getFormattedDateNoYear
 import com.example.codriving.common.itemCarView
-import com.example.codriving.data.model.Car
 import com.example.codriving.navigation.AppScreens
 import com.example.codriving.screens.HomePage.navigationBar.navigationBar
 import com.example.codriving.screens.MyCars.LoadScreen
@@ -232,6 +220,7 @@ fun HomePage(
     var isSearching by rememberSaveable {
         mutableStateOf(false)
     }
+
     contentModalSheet(bottomSheetState = bottomSheetState, onConfirmation = { startDay, endDay ->
         viewModel.setStartDay(startDay)
         viewModel.setEndDay(endDay)
@@ -255,7 +244,12 @@ fun HomePage(
                                 AppScreens.LoginScreen.route,
                             )
                         }
-                    })
+                    },
+                    onProfile = {
+                        navController.navigate(AppScreens.ProfileScreen.route)
+                    },
+
+                    )
             },
             bottomBar = { navigationBar(navController = navController) },
             content = { paddingValues ->
@@ -294,62 +288,6 @@ fun HomePage(
     }
 }
 
-@Composable
-fun CarruselTopCars(topRatedCars: HashMap<String, Car>, onClickItem: (String) -> Unit) {
-    val aspectRatio = 16f / 9f
-    val heightInDp = 150f
-    val widthInDp = heightInDp * aspectRatio
-
-    LazyRow(
-        modifier = Modifier
-            .fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        topRatedCars.forEach { Car ->
-
-            item {
-                OutlinedCard(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
-                    onClick = { onClickItem(Car.key) },
-                    shape = RoundedCornerShape(8.dp),
-                    elevation = CardDefaults.cardElevation(hoveredElevation = 10.dp),
-                    modifier = Modifier
-                        .background(Color.Transparent)
-                        .size(width = widthInDp.toInt().dp, height = 200.dp)
-
-                ) {
-                    Column {
-                        AsyncImage(
-                            model = Car.value.image[0],
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.height(150.dp)
-                        )
-
-                        Text(
-                            text = Car.value.model,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Text(
-                            text = "Kilometers " + Car.value.kilometers,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                }
-
-            }
-        }
-    }
-}
-
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun HeaderHome(
@@ -357,7 +295,8 @@ fun HeaderHome(
     viewModel: HomeViewModel,
     bottomSheetState: ModalBottomSheetState,
     onSearch: () -> Unit,
-    onLogOut: () -> Unit
+    onLogOut: () -> Unit,
+    onProfile: () -> Unit,
 ) {
     val selectstartDay = viewModel.selectedStartDay.collectAsState()
     val selectEndDay = viewModel.selectedEndDay.collectAsState()
@@ -384,6 +323,23 @@ fun HeaderHome(
                     expanded = expanded.value,
                     onDismissRequest = { expanded.value = false }
                 ) {
+                    DropdownMenuItem(
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = "Profile"
+                            )
+                        },
+                        onClick = {
+                            onProfile()
+                            expanded.value = false
+                        }
+                    )
 
                     DropdownMenuItem(
                         trailingIcon = {

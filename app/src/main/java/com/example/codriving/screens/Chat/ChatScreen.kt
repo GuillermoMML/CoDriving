@@ -3,9 +3,7 @@ package com.example.codriving.screens.Chat
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.widget.Toast
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -55,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.codriving.common.launchPhotoPicker
 import com.example.codriving.data.model.Message
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -64,43 +61,34 @@ import java.text.SimpleDateFormat
 @Composable
 fun chatScreen(navController: NavController, viewModel: ChatViewModel) {
     val messages by viewModel.messages.collectAsState()
-
-
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-                title = {
-                    Text(
-                        "Chats",
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+            Column {
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.mediumTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    title = {
+                        Text(
+                            "Chats",
+                            overflow = TextOverflow.Ellipsis
                         )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            imageVector = Icons.Filled.Person,
-                            contentDescription = "Profile"
-                        )
-                    }
-                },
-            )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    },
+                )
+            }
         },
         content = {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
                     .padding(it)
             ) {
                 LazyColumn(
@@ -109,7 +97,6 @@ fun chatScreen(navController: NavController, viewModel: ChatViewModel) {
                         .weight(1f),
                     contentPadding = PaddingValues(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
-
                 ) {
                     items(messages) { message ->
                         if (message.idSender.isNotEmpty()) {
@@ -118,17 +105,12 @@ fun chatScreen(navController: NavController, viewModel: ChatViewModel) {
                                 isOwnMessage = message.idSender == Firebase.auth.uid.toString()
                             )
                         }
-
-
                     }
-
                 }
                 MessageInput(viewModel) { message ->
                     viewModel.sendMessage(message)
                 }
-
             }
-
         }
     )
 }
@@ -246,8 +228,3 @@ fun formatTimestampToTime(timestamp: com.google.firebase.Timestamp): String {
     return formatter.format(timestamp.toDate())
 }
 
-fun launchPhotoPicker(singlePhotoPickerLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>) {
-    singlePhotoPickerLauncher.launch(
-        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-    )
-}

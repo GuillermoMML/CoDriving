@@ -21,6 +21,8 @@ import com.example.codriving.screens.LoginPage.ui.LoginViewModel
 import com.example.codriving.screens.MyCars.CarsFormScreen
 import com.example.codriving.screens.MyCars.CarsFormViewModel
 import com.example.codriving.screens.MyCars.ListMyCarsScreen
+import com.example.codriving.screens.Profile.ProfileScreen
+import com.example.codriving.screens.Profile.ProfileViewModel
 import com.example.codriving.screens.RentCar.RentCarScreen
 import com.example.codriving.screens.RentCar.RentCarViewModel
 import com.example.codriving.screens.SignUp.SignScreen
@@ -147,7 +149,10 @@ fun AppNavigation(
             chatScreen(navController = navController, chatViewModel)
 
         }
-
+        composable(AppScreens.ProfileScreen.route) {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+            ProfileScreen(navController = navController, profileViewModel)
+        }
 
     }
 }

@@ -147,8 +147,7 @@ fun notificationView(
                         loadingInfo = true
                     },
                 ) {
-                    if (loadingInfo) {
-                    } else {
+                    if (!loadingInfo) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -218,6 +217,7 @@ fun notificationView(
                                                     "Se acepto el servicio con exito",
                                                     it
                                                 )
+                                                viewModel.generateContract(it)
                                                 val result = snackbarHostState
                                                     .showSnackbar(
                                                         message = "Se generó el contrato",
@@ -259,7 +259,9 @@ fun notificationView(
                                             snackbarHostState.showSnackbar("Error al generar el contrato ${e.message}")
 
                                         }
+
                                     }
+
 
                                 },
                                 onDelete = {
@@ -505,7 +507,6 @@ fun ListNotifies(
                             ) { notify ->
                                 infoNotify(
                                     notify = notify,
-                                    userNotification = userNotification.value!![it.idNotification]!!,
                                     onCancel = { onDelete(notify) }
                                 )
                             }
@@ -520,7 +521,6 @@ fun ListNotifies(
                             ) { notify ->
                                 infoNotify(
                                     notify = notify,
-                                    userNotification = userNotification.value!![it.idNotification]!!,
                                     onCancel = { onDelete(notify) }
                                 )
                             }
@@ -551,11 +551,10 @@ fun ListNotifies(
 @Composable
 fun infoNotify(
     notify: Notification,
-    userNotification: RequestNotification,
     onCancel: (Notification) -> Unit
 ) {
-    val message = if (notify.type == 3) "Se acepto con exito" else notify.message
-    var imageProfile = ""
+    val message = if (notify.type == 3) "Se acepto con exito su petición" else notify.message
+    var imageProfile: String
     var isRemoved by remember {
         mutableStateOf(false)
     }
@@ -603,7 +602,7 @@ fun infoNotify(
                     .fillMaxHeight()
             ) {
                 Text(
-                    "${formatDateToDayMonthYear(notify.timestamp!!.toDate())}",
+                    formatDateToDayMonthYear(notify.timestamp!!.toDate()),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -639,7 +638,7 @@ fun userNotifyItem(
     onConfirm: () -> Unit
 ) {
     val user = userNotification.user
-    var imageProfile = ""
+    var imageProfile: String
     var isRemoved by remember {
         mutableStateOf(false)
     }
@@ -684,7 +683,7 @@ fun userNotifyItem(
         trailingContent = {
             Column(modifier = Modifier.width(100.dp)) {
                 Text(
-                    "${formatDateToDayMonthYear(notify.timestamp!!.toDate())}",
+                    formatDateToDayMonthYear(notify.timestamp!!.toDate()),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )

@@ -11,6 +11,6 @@ sealed class AppScreens(val route:String){
     object NotificationScreen : AppScreens("NotificationScreen")
 
     object ConversationScreen : AppScreens("ConversationScreen")
-
     object ChatScreen : AppScreens("ChatScreen")
+    object ProfileScreen : AppScreens("ProfileScreen")
 }

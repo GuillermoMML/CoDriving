@@ -21,6 +21,7 @@ import com.google.firebase.firestore.DocumentReference
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.text.DateFormat
+import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
@@ -176,8 +177,11 @@ class NotificationViewModel @Inject constructor(
             notify.rentsCars.forEach {
                 uploadCarRepository.busyRentCar(it)
             }
+
+            //Eliminamos la notificación
             setCurrentNotify(notify)
             removeNotify("", true)
+
         } catch (e: Exception) {
             _error.value = e.message
         }
@@ -235,5 +239,18 @@ class NotificationViewModel @Inject constructor(
 
     private fun uploadPDFStorage(auxPDF: String, notify: Notification) {
         firebaseStorageRepository.uploadPDF(auxPDF, notify)
+    }
+
+    fun generateContract(notification: Notification) {
+        var lastEndDate = Timestamp(Date())
+        notification.rentsCars.forEach {
+            it.get().addOnSuccessListener {
+                if (it["endDate"] as Timestamp >= lastEndDate) {
+                    lastEndDate = it["endDate"] as Timestamp
+                }
+            }
+        }
+
+        userRepository.generateContract(lastEndDate, notification)
     }
 }

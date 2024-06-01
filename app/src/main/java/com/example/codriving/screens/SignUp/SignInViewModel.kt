@@ -13,14 +13,13 @@ import javax.inject.Inject
 @HiltViewModel
 class SignInViewModel @Inject constructor(private val repository: FirebaseAuthRepository,private val userRepository: UserRepository) : ViewModel() {
 
-   private val _fullname = MutableLiveData<String>()
+    private val _fullname = MutableLiveData<String>()
     val fullname: LiveData<String> get() = _fullname
 
     private val _phone = MutableLiveData("")
     val phone: LiveData<String> get() = _phone
 
-    private val _location = MutableLiveData(null)
-    val location: MutableLiveData<Nothing?> get() = _location
+    private val _location = MutableLiveData("")
 
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> get() = _errorMessage
@@ -49,7 +48,8 @@ class SignInViewModel @Inject constructor(private val repository: FirebaseAuthRe
                     fullName = _fullname.value,
                     email = email,
                     phone = _phone.value,
-                    location = _location.value,
+                    imageProfile = "https://www.iprcenter.gov/image-repository/blank-profile-picture.png/@@images/image.png",
+                    location = _location.value!!,
                     rentalHistory = emptyList(),
                     ratings = emptyList()
                 )

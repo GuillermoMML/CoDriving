@@ -16,7 +16,10 @@ import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(private val carRepository: UploadCarRepository,private val userRepository: UserRepository) :
+class HomeViewModel @Inject constructor(
+    private val uploadCarRepository: UploadCarRepository,
+    private val userRepository: UserRepository
+) :
     ViewModel() {
     private val _selectedStartDay = MutableStateFlow(Date())
     val selectedStartDay: MutableStateFlow<Date> get() = _selectedStartDay
@@ -25,14 +28,9 @@ class HomeViewModel @Inject constructor(private val carRepository: UploadCarRepo
         MutableStateFlow(Date(OffsetDateTime.now().plusDays(8).toInstant().toEpochMilli()))
     val selectedEndDay: MutableStateFlow<Date> get() = _selectedEndDay
 
-    /* private val _selectedStartTime = MutableStateFlow(Date())
-     val selectStartTime: StateFlow<Date> get() = _selectedStartTime
-     private val _selectedEndTime = MutableStateFlow(Date())
-     val selectedEndTime: StateFlow<Int> get() = _selectedEndTime*/
 
     private val _mostRated = MutableLiveData<HashMap<String, Car>>()
     val mostRated: LiveData<HashMap<String, Car>> get() = _mostRated
-    //Encargarse  de la logica de cargar datos (poner maximo y al alcanzar pedir a la base de datos más)
 
     init {
         viewModelScope.launch {
@@ -40,8 +38,9 @@ class HomeViewModel @Inject constructor(private val carRepository: UploadCarRepo
         }
     }
 
+
     suspend fun getTopRatedCars(): HashMap<String, Car> {
-        return carRepository.getMostRatingCars()
+        return uploadCarRepository.getMostRatingCars()
     }
 
     fun setStartDay(day: Date) {
@@ -136,11 +135,11 @@ class HomeViewModel @Inject constructor(private val carRepository: UploadCarRepo
         _selectedEndDay.value = newCalendar.time
     }
 
-    fun logOut():Boolean{
-        try{
+    fun logOut(): Boolean {
+        try {
             userRepository.logOut()
             return true
-        }catch (e:Exception){
+        } catch (e: Exception) {
             return false
         }
     }

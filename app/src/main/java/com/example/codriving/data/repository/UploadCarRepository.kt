@@ -1,10 +1,10 @@
 package com.example.codriving.data.repository
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.example.codriving.data.model.Car
 import com.example.codriving.data.model.RentCars
+import com.example.codriving.data.model.RentReview
+import com.example.codriving.data.model.User
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -110,7 +110,7 @@ class UploadCarRepository @Inject constructor(
                         val plate = carDocument.getString("plate") ?: ""
                         val brand = carDocument.getString("brand") ?: ""
                         val model = carDocument.getString("model") ?: ""
-                        val enable = carDocument.getBoolean("enable") ?:false
+                        val enable = carDocument.getBoolean("enable") ?: false
                         val year = carDocument.getString("year") ?: ""
                         val kilometers = carDocument.getLong("kilometers")?.toInt() ?: 0
                         val rating = carDocument.getLong("rating")?.toDouble() ?: 0.0
@@ -172,7 +172,8 @@ class UploadCarRepository @Inject constructor(
 
     suspend fun getCarById(id: String): Car {
         val carDocument = firestore.collection("Cars").document(id).get().await()
-        val car = carDocument.toObject(Car::class.java) ?: throw IllegalStateException("Invalid data")
+        val car =
+            carDocument.toObject(Car::class.java) ?: throw IllegalStateException("Invalid data")
         return car
     }
 
@@ -189,17 +190,12 @@ class UploadCarRepository @Inject constructor(
         val resultMap = HashMap<String, Car>()
 
         querySnapshot.documents.forEach { document ->
-            val car = document.toObject(Car::class.java) ?: throw IllegalStateException("Invalid data")
+            val car =
+                document.toObject(Car::class.java) ?: throw IllegalStateException("Invalid data")
             resultMap[document.id] = car
         }
 
         return resultMap
-    }
-
-
-    fun getCarsByBrand(): LiveData<Map<String, List<Car>>> {
-        return MutableLiveData<Map<String, List<Car>>>()
-
     }
 
     suspend fun getRentsByCar(listDocument: List<DocumentReference?>): HashMap<DocumentReference, RentCars> {
@@ -308,23 +304,64 @@ class UploadCarRepository @Inject constructor(
         return rentCarDocument["pricePerDay"] as String
     }
 
-    suspend fun createDeal(car: Car) {
-        val auth = FirebaseAuth.getInstance().uid
-        try {
-            val carDocRef = firestore.collection("Cars").document()
-            carDocRef.set(car)
-                .await()
-            //Referencia user
-            val userDocRef = firestore.collection("Users")
-                .document(auth!!)
-            // Agrega el ID del carro recién creado a la lista en el documento del usuario
-            userDocRef.update("cars", FieldValue.arrayUnion(carDocRef.id))
-                .await()
-            // Operación exitosa
-        } catch (e: Exception) {
-            throw UserRepositoryException("Error al crear el usuario: ${e.message}", e)
-        }
+
+    fun getPreviewReviewByCar(id: String, onComplete: (Map<User, RentReview>?) -> Unit) {
+        val result = mutableMapOf<User, RentReview>()
+        firestore.collection("Cars").document(id).collection("reviews").get()
+            .addOnSuccessListener { reviewSnapshot ->
+                val reviewPromises = reviewSnapshot.documents.map { reviewDoc ->
+                    val review = reviewDoc.toObject(RentReview::class.java)
+                    val userId = reviewDoc.getString("reviewSender")
+
+                    if (review != null && userId != null) {
+                        val userPromise = firestore.collection("Users").document(userId).get()
+                            .addOnSuccessListener { userDoc ->
+                                val user = userDoc.toObject(User::class.java)
+                                if (user != null) {
+                                    result[user] = review
+                                }
+                            }
+                            .addOnFailureListener {
+                                onComplete(null)
+                            }
+
+                        val existingReviewPromise = firestore.collection("Cars").document(id)
+                            .collection("reviews").document(userId).get()
+
+                        Tasks.whenAll(userPromise, existingReviewPromise).addOnSuccessListener {
+                            val existingReview =
+                                existingReviewPromise.result?.toObject(RentReview::class.java)
+                            if (existingReview != null) {
+                                // Si ya existe una revisión del usuario, actualiza esa revisión
+                                firestore.collection("Cars").document(id)
+                                    .collection("reviews").document(userId).set(review)
+                                    .addOnSuccessListener {
+                                        onComplete(result.toMap())
+                                    }
+                                    .addOnFailureListener {
+                                        onComplete(null)
+                                    }
+                            } else {
+                                // Si no existe una revisión del usuario, agrega la nueva revisión
+                                onComplete(result.toMap())
+                            }
+                        }
+                    } else {
+                        null // Si la review o el userId son nulos, devuelve null
+                    }
+                }
+
+                Tasks.whenAll(reviewPromises).addOnCompleteListener {
+                    if (!it.isSuccessful) {
+                        onComplete(null)
+                    }
+                }
+            }
+            .addOnFailureListener {
+                onComplete(null) // En caso de error, se devuelve null
+            }
     }
+
 }
 
 class UploadCarRepositoryException(message: String, cause: Throwable?) : Exception(message, cause)

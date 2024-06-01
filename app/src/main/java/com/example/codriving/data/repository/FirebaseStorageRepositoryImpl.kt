@@ -13,7 +13,6 @@ class FirebaseStorageRepositoryImpl @Inject constructor(
     private val storage: FirebaseStorage
 ) : FirebaseStorageRepository {
 
-
     override fun uploadImage(imageUri: Uri): Task<Uri> {
         val storageRef = storage.reference
         val imagesRef = storageRef.child("images/${UUID.randomUUID()}")
@@ -31,7 +30,6 @@ class FirebaseStorageRepositoryImpl @Inject constructor(
         val storageRef = storage.reference
         val pdfRef = storageRef.child("rentingPDF/${notification.idNotification}.pdf")
         val pdfUri = Uri.fromFile(File(pdfPath))
-
         return pdfRef.putFile(pdfUri)
             .addOnFailureListener { exception ->
                 Log.e("FirebaseUpload", "Failed to upload PDF: ${exception.message}")
@@ -44,6 +42,8 @@ class FirebaseStorageRepositoryImpl @Inject constructor(
                 pdfRef.downloadUrl
             }
             .addOnSuccessListener { uri ->
+
+
                 // Show a toast message on success
                 Log.e("Sucessfull", "PDF uploaded")
 

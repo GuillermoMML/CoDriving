@@ -1,10 +1,12 @@
 package com.example.codriving.screens.RentCar
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -13,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +26,8 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.typography
@@ -43,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,11 +59,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.codriving.R
 import com.example.codriving.common.HeaderPopBack
+import com.example.codriving.data.model.Car
 import com.example.codriving.data.model.Conversations
 import com.example.codriving.data.model.Message
 import com.example.codriving.data.model.RentCars
+import com.example.codriving.data.model.RentReview
 import com.example.codriving.data.model.User
 import com.example.codriving.navigation.AppScreens
 import com.example.codriving.screens.MyCars.LoadScreen
@@ -91,7 +101,7 @@ fun RentCarScreen(
     val scope = rememberCoroutineScope()
     val listOfRents = rentCarViewModel.listOfRents.observeAsState()
     val ownerUser = rentCarViewModel.ownerUser.observeAsState()
-
+    val listOfReview = rentCarViewModel.listOfReviews.observeAsState(emptyMap())
     LaunchedEffect(idRentCar) {
         rentCarViewModel.loadData(idRentCar!!)
     }
@@ -133,9 +143,10 @@ fun RentCarScreen(
                         listOfRents.let {
                             it.value?.let { it1 ->
                                 bodyRest(
-                                    it1, car!!.rating, //car!!,
+                                    it1,
+                                    car!!,
                                     ownerUser.value?.fullName!!,
-                                    car!!.owner!!.id
+                                    listOfReview.value,
                                 ) {
                                     //rentCar es un car
                                     navController.navigate("${AppScreens.BookRentScreen.route}/${idRentCar}")
@@ -150,6 +161,7 @@ fun RentCarScreen(
         )
     }
 }
+
 
 @Composable
 fun RatingBar(
@@ -187,20 +199,24 @@ fun RatingBar(
 @Composable
 fun bodyRest(
     rentCars: List<RentCars>,
-    rating: Double?,
-    ownerUser: String = "",
-    car: String,
+    car: Car,
+    ownerName: String,
+    listofReview: Map<User, RentReview>,
     onClickBook: () -> Unit
 ) {
+    val formattedRating = "%.2f".format(Locale.ENGLISH, car.rating)
     val scope = rememberCoroutineScope()
     val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault())
-    val ownerName = ownerUser
     val rentTimes = remember {
         mutableStateOf(false)
     }
 
 
-    Column(Modifier.fillMaxWidth()) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(5.dp)
+    ) {
 
         Box(
             modifier = Modifier
@@ -216,11 +232,14 @@ fun bodyRest(
                             val starformattedDate: String = dateFormat.format(startDate)
                             val endformattedDate: String = dateFormat.format(endDate)
 
-                            Text(
-                                text = it.pricePerDay.toString() + "€/day " + starformattedDate + " - " + endformattedDate,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
-                            )
+                            Row {
+                                Text(
+                                    text = it.pricePerDay.toString() + "€/day " + starformattedDate + " - " + endformattedDate,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                )
+
+                            }
                         }
 
 
@@ -270,7 +289,7 @@ fun bodyRest(
         ) {
             Button(onClick = {
                 scope.launch(Dispatchers.IO) {
-                    val array = listOf(Firebase.auth.uid.toString(), car)
+                    val array = listOf(Firebase.auth.uid.toString(), car.owner!!.id)
                     val conversation = Conversations(
                         date = Timestamp(Date()),
                         lastMessage = null,
@@ -311,21 +330,68 @@ fun bodyRest(
                 modifier = Modifier
                     .weight(1f)
             ) {
-                Text(
-                    text = rating.toString(),
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = formattedRating,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = car.numberOfReviews.toString(),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Light
+                    )
+                }
+                RatingBar(car.rating!!)
+                if (listofReview.isNotEmpty()) {
+                    Card(
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 5.dp
+                        )
+                    ) {
+                        LazyColumn(contentPadding = PaddingValues(5.dp)) {
+                            items(listofReview.keys.toList()) { user ->
+                                Column(
+                                    modifier = Modifier
+                                        .padding(5.dp)
+                                        .fillMaxWidth()
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(50.dp)
+                                                .clip(CircleShape)
+                                                .background(Color.Transparent)
+                                        ) {
+                                            Image(
+                                                painter = rememberAsyncImagePainter(
+                                                    ImageRequest.Builder(
+                                                        LocalContext.current
+                                                    ).data(data = user.imageProfile)
+                                                        .apply(block = fun ImageRequest.Builder.() {
+                                                            crossfade(true)
+                                                        }).build()
+                                                ),
+                                                contentDescription = "Profile image",
+                                                contentScale = ContentScale.Fit
+                                            )
+                                        }
+                                        Text(text = user.fullName.toString())
+                                    }
+                                    listofReview[user]?.let { RatingBar(rating = it.rating) }
 
-                RatingBar(rating!!)
-                Text(text = "Total Reviews HERE")
-            }
-            Column(
-                modifier = Modifier
-                    .weight(2f)
-            ) {
+                                    listofReview[user]?.let { Text(text = it.comment) }
+
+                                }
+                            }
+                        }
+
+                    }
+
+                }
 
             }
+
         }
     }
 

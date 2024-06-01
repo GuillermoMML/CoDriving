@@ -1,12 +1,7 @@
 package com.example.codriving.data.model
 
-import java.time.LocalDate
-
 data class RentReview(
-    val id: Int,//Id del RentView
-    val author: String,
-    val rating: Int,
-    val comment: String,
-    val date: LocalDate,
-    val rentCars: RentCars
+    val comment: String = "",
+    val rating: Double = 0.0,
+    val reviewSender: String? = ""
 )
