@@ -71,6 +71,7 @@ class ChatViewModel @Inject constructor() :
     suspend fun uploadImage(uri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
         try {
             val storageRef = storage.reference.child("chatimages/${uri.lastPathSegment}")
+            val uploadTask = storageRef.putFile(uri).await()
             val downloadUrl = storageRef.downloadUrl.await()
             onSuccess(downloadUrl.toString())
         } catch (e: Exception) {

@@ -294,7 +294,7 @@ class UserRepository @Inject constructor(
             }
         } catch (e: Exception) {
             onFailure(
-                throw UserRepositoryException("Error al cargar contracto: ${e.message}", e)
+                 e
             )
         }
 
