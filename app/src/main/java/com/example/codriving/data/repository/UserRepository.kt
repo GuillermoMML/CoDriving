@@ -2,6 +2,8 @@ package com.example.codriving.data.repository
 
 import android.util.Log
 import com.example.codriving.data.model.Contracts
+import com.example.codriving.data.model.Conversations
+import com.example.codriving.data.model.Message
 import com.example.codriving.data.model.Notification
 import com.example.codriving.data.model.RequestContracts
 import com.example.codriving.data.model.User
@@ -10,6 +12,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
 import java.io.FileNotFoundException
 import java.util.Date
@@ -355,40 +359,49 @@ class UserRepository @Inject constructor(
             }
     }
 
+    suspend fun addConversation(conversation: List<String>) {
+        if (conversation[0] == auth.uid && conversation[1] == auth.uid) {
+            return
+        }
+        val sortedConversation = conversation.sorted()
 
-    /* carRef.collection("reviews").get().addOnSuccessListener { reviewsSnapshot ->
-         val sizeReview = reviewsSnapshot.size()
-         firestore.runTransaction { transaction ->
-             numberOfRating = reviewsSnapshot.size()
-             val snapshot = transaction.get(carRef)
-             carRef.get().addOnSuccessListener {
-                 val currentReviewsLong = it.getLong("numberOfReviews")!!.toInt()
-                 if (currentReviewsLong != 0) {
-                     if (currentReviewsLong == numberOfRating) {
-                         resultMessage = "You have already commented it"
-                         return@addOnSuccessListener
-                     }
-                 }
-                 if (currentReviewsLong == 0) {
-                     newRating = rating
-                     numberOfRating = 1
-                     return@addOnSuccessListener
-                 }
-                 val currentRating = snapshot.getDouble("rating") ?: 0.0
-                 newRating = (currentRating + rating) / sizeReview
-             }
-         }.addOnCompleteListener {
-             if (newRating != 0.0) {
-                 carRef.update("rating", newRating)
-                 carRef.update("numberOfReviews", numberOfRating)
-             }
-             onComplete(resultMessage)
-         }.addOnFailureListener { e ->
-             onFailure(e)
-         }
 
-     }*/
+        val existingConversations = Firebase.firestore.collection("conversations")
+            .whereArrayContains("userIds", sortedConversation[0])
+            .get()
+            .await()
+            .documents
 
+        val conversationExists = existingConversations.any { doc ->
+            val userIds = doc.get("userIds") as List<String>
+            userIds.sorted() == sortedConversation
+        }
+
+        // If a matching conversation is found, do not add a new one
+        if (conversationExists) {
+            return
+        }
+
+        val newConversation = Conversations(
+            date = Timestamp(Date()),
+            lastMessage = null,
+            userIds = sortedConversation
+        )
+        val message = Message(
+            message = "",
+            idSender = "",
+            type_message = 0,
+            date = Timestamp(Date())
+        )
+        val conversationRef =
+            Firebase.firestore.collection("conversations").add(newConversation)
+
+        // Get the document reference for the newly created conversation
+        val docRef = conversationRef.await()
+        Firebase.firestore.collection("conversations").document(docRef.id)
+            .collection("messages").add(message).await()
+
+    }
 
     companion object {
         private const val TAG = "UserRepository"

@@ -1,16 +1,11 @@
 package com.example.codriving.data.repository
 
 import com.example.codriving.data.model.Conversations
-import com.example.codriving.data.model.Message
 import com.example.codriving.data.model.User
-import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.firestore
 import javax.inject.Inject
 
 
@@ -20,7 +15,6 @@ class MessagesRepository @Inject constructor(
 ) {
 
     private var listenerRegistration: ListenerRegistration? = null
-    private var currentConversationsRef: DocumentReference? = null
 
     fun getChatAvailable(
         onSuccess: (Map<String, Conversations>) -> Unit,
@@ -164,39 +158,6 @@ class MessagesRepository @Inject constructor(
           }
 
       }*/
-    fun getMessages2(
-        documentReference: DocumentReference,
-        onSuccess: (messages: MutableList<Message>) -> Unit,
-        onError: (Exception) -> Unit
-    ) {
-
-        val messagesRef =
-            Firebase.firestore.collection("conversations").document(documentReference.id)
-                .collection("messages").orderBy("date", Query.Direction.ASCENDING)
-
-        val messages = mutableListOf<Message>()
-
-        messagesRef.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                // Handle errors
-                onError(error)
-                return@addSnapshotListener
-            }
-
-            if (snapshot != null) {
-                messages.clear() // Clear existing messages before adding new ones
-                for (document in snapshot.documents) {
-                    val message = document.toObject(Message::class.java)!!
-                    if (message.idSender != null && message.idSender.isNotEmpty()) {
-                        messages.add(message)
-                    }
-                }
-                onSuccess(messages)
-
-            }
-        }
-
-    }
 
     fun getMessagesListener(): ListenerRegistration? {
         return listenerRegistration

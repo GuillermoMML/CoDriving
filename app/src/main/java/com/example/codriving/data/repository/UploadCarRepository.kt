@@ -178,12 +178,16 @@ class UploadCarRepository @Inject constructor(
     }
 
 
-    suspend fun getMostRatingCars(): HashMap<String, Car> {
+    suspend fun getMostRatingCars(index: Long = 0): HashMap<String, Car> {
         val carsRef = firestore.collection("Cars")
 
-        val querySnapshot = carsRef.orderBy("rating", Query.Direction.DESCENDING)
+        val querySnapshot = carsRef
             .whereEqualTo("enable", true) // Filtrar solo los coches habilitados
-            .limit(5) // Obtener los 5 mejores coches
+            .orderBy(
+                "rating",
+                Query.Direction.DESCENDING
+            ) // Ordenar por rating en orden descendente
+            .limit(index + 5) // Obtener los 5 mejores coches
             .get()
             .await()
 
@@ -195,7 +199,12 @@ class UploadCarRepository @Inject constructor(
             resultMap[document.id] = car
         }
 
-        return resultMap
+        val sortedMap = resultMap.entries
+            .sortedByDescending { it.value.rating }
+            .associateBy({ it.key }, { it.value })
+            .toMap(LinkedHashMap())
+
+        return sortedMap
     }
 
     suspend fun getRentsByCar(listDocument: List<DocumentReference?>): HashMap<DocumentReference, RentCars> {
@@ -299,10 +308,10 @@ class UploadCarRepository @Inject constructor(
         }
     }
 
-    suspend fun getCarPrice(rentRef: DocumentReference): String {
+    /*suspend fun getCarPrice(rentRef: DocumentReference): String {
         val rentCarDocument = rentRef.get().await()
         return rentCarDocument["pricePerDay"] as String
-    }
+    }*/
 
 
     fun getPreviewReviewByCar(id: String, onComplete: (Map<User, RentReview>?) -> Unit) {

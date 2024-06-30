@@ -1,12 +1,14 @@
 package com.example.codriving.di
 
+import android.content.Context
+import com.example.codriving.PreferencesManager
 import com.example.codriving.data.repository.FirebaseAuthRepository
 import com.example.codriving.data.repository.FirebaseStorageRepository
 import com.example.codriving.data.repository.FirebaseStorageRepositoryImpl
 import com.example.codriving.data.repository.SearchRepository
 import com.example.codriving.data.repository.UploadCarRepository
 import com.example.codriving.data.repository.UserRepository
-import com.example.codriving.screens.LoginPage.ui.LoginViewModel
+import com.example.codriving.view.LoginPage.ui.LoginViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
@@ -15,6 +17,7 @@ import com.google.firebase.storage.ktx.storage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -27,6 +30,12 @@ object AppModule {
     @Singleton
     fun provideFirebaseFirestore(): FirebaseFirestore {
         return FirebaseFirestore.getInstance()
+    }
+
+    @Provides
+    @Singleton
+    fun providePreferencesManager(@ApplicationContext context: Context): PreferencesManager {
+        return PreferencesManager(context)
     }
 
     @Provides

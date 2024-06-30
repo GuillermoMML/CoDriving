@@ -41,8 +41,7 @@ class FirebaseStorageRepositoryImpl @Inject constructor(
                 }
                 pdfRef.downloadUrl
             }
-            .addOnSuccessListener { uri ->
-
+            .addOnSuccessListener {
 
                 // Show a toast message on success
                 Log.e("Sucessfull", "PDF uploaded")

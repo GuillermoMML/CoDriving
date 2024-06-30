@@ -1,7 +1,23 @@
 package com.example.codriving.navigation
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -9,36 +25,45 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.codriving.screens.BookRent.BookRentScreen
-import com.example.codriving.screens.BookRent.BookRentViewModel
-import com.example.codriving.screens.Chat.ChatViewModel
-import com.example.codriving.screens.Chat.ConversationScreen
-import com.example.codriving.screens.Chat.ConversationsViewModel
-import com.example.codriving.screens.Chat.chatScreen
-import com.example.codriving.screens.HomePage.HomePage
-import com.example.codriving.screens.LoginPage.ui.LoginScreen
-import com.example.codriving.screens.LoginPage.ui.LoginViewModel
-import com.example.codriving.screens.MyCars.CarsFormScreen
-import com.example.codriving.screens.MyCars.CarsFormViewModel
-import com.example.codriving.screens.MyCars.ListMyCarsScreen
-import com.example.codriving.screens.Profile.ProfileScreen
-import com.example.codriving.screens.Profile.ProfileViewModel
-import com.example.codriving.screens.RentCar.RentCarScreen
-import com.example.codriving.screens.RentCar.RentCarViewModel
-import com.example.codriving.screens.SignUp.SignScreen
-import com.example.codriving.screens.notificationPage.notificationView
-import com.google.firebase.auth.FirebaseAuth
+import com.example.codriving.R
+import com.example.codriving.ui.theme.ThemeViewModel
+import com.example.codriving.view.ChatPage.ChatViewModel
+import com.example.codriving.view.ChatPage.ConversationScreen
+import com.example.codriving.view.ChatPage.ConversationsViewModel
+import com.example.codriving.view.ChatPage.chatScreen
+import com.example.codriving.view.HomePage.HomePage
+import com.example.codriving.view.HomePage.HomeViewModel
+import com.example.codriving.view.LoginPage.ui.LoginScreen
+import com.example.codriving.view.LoginPage.ui.LoginViewModel
+import com.example.codriving.view.MyCarsPage.CarsFormScreen
+import com.example.codriving.view.MyCarsPage.CarsFormViewModel
+import com.example.codriving.view.MyCarsPage.ListMyCarsScreen
+import com.example.codriving.view.ProfilePage.ProfileScreen
+import com.example.codriving.view.ProfilePage.ProfileViewModel
+import com.example.codriving.view.RentCarPage.RentCarScreen
+import com.example.codriving.view.RentCarPage.RentCarViewModel
+import com.example.codriving.view.ServicePage.BookRentScreen
+import com.example.codriving.view.ServicePage.BookRentViewModel
+import com.example.codriving.view.SignUpPage.SignScreen
+import com.example.codriving.view.notificationPage.notificationView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
-    auth: FirebaseAuth,
+    themeViewModel: ThemeViewModel,
     isLogged: () -> Unit
 ) {
-
+    val isLoading = mutableStateOf(true)
+    val scope = rememberCoroutineScope()
     NavHost(navController = navController, startDestination = AppScreens.LoginScreen.route) {
         composable(route = AppScreens.HomeScreen.route) {
-            HomePage(navController)
+            val homePageViewModifier: HomeViewModel = hiltViewModel()
+
+            HomePage(navController, homePageViewModifier, themeViewModel)
         }
 
         composable(
@@ -57,21 +82,44 @@ fun AppNavigation(
         composable(route = AppScreens.LoginScreen.route) {
             val loginViewModel: LoginViewModel = hiltViewModel()
 
-            LoginScreen(navController, loginViewModel) {
-                if (auth.currentUser != null) {
-                    navController.navigate(AppScreens.HomeScreen.route)
-                } else {
-                    isLogged()
-                }
+            LaunchedEffect(Unit) {
 
-                navController.navigate(AppScreens.HomeScreen.route) {
-                    popUpTo(navController.graph.startDestinationId) {
-                        inclusive =
-                            true
+                scope.launch(Dispatchers.IO) {
+                    loginViewModel.getLogged()
+                    delay(1000)
+                    withContext(Dispatchers.Main) {
+                        isLoading.value = false
                     }
-
                 }
             }
+            if (!isLoading.value) {
+                if (loginViewModel.loginState.value!!.isLoggedIn) {
+                    navController.navigate(AppScreens.HomeScreen.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive =
+                                true
+                        }
+                    }
+                } else {
+                    LoginScreen(navController = navController, viewModel = loginViewModel) {
+                        navController.navigate(AppScreens.HomeScreen.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive =
+                                    true
+                            }
+                        }
+                    }
+                }
+
+            }
+            /*  LoginScreen(navController, loginViewModel) {
+                  if (auth.currentUser != null) {
+                      navController.navigate(AppScreens.HomeScreen.route)
+                  } else {
+                      isLogged()
+                  }
+
+              }*/
         }
         composable(AppScreens.SignInScreen.route) {
 
@@ -155,4 +203,29 @@ fun AppNavigation(
         }
 
     }
+}
+
+@Composable
+fun initialLoadingScreen() {
+    val backgroundColor = Color(0xFF0748AB)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ecofamily), // Cambia a tu recurso de ícono
+                contentDescription = null,
+                modifier = Modifier.size(400.dp) // Ajusta el tamaño del ícono según sea necesario
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator()
+        }
+    }
+
 }

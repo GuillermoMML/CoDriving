@@ -23,7 +23,8 @@
         android:roundIcon="@mipmap/ic_codriving_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CoDriving"
-        tools:targetApi="31">
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="tiramisu">
         <!--Custom Icon notify !-->
 
         <activity

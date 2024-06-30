@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Card
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Textsms
@@ -20,7 +22,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,21 +30,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.codriving.data.model.Car
-import com.example.codriving.data.model.Conversations
-import com.example.codriving.data.model.Message
-import com.example.codriving.screens.RentCar.RatingBar
-import com.google.firebase.Timestamp
+import com.example.codriving.view.RentCarPage.RatingBar
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import java.util.Date
 
 
 @Composable
-fun itemCarView(car: Car, onClickItem: (Boolean) -> Unit, onMessage: (Car) -> Unit) {
-    val scope = rememberCoroutineScope()
+fun itemCarView(car: Car, onClickItem: (Boolean) -> Unit, onMessage: (List<String>) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -82,31 +75,9 @@ fun itemCarView(car: Car, onClickItem: (Boolean) -> Unit, onMessage: (Car) -> Un
                     ) {
                         FloatingActionButton(
                             onClick = {
-                                scope.launch {
-                                    val array = listOf(Firebase.auth.uid.toString(), car.owner!!.id)
-                                    val conversation = Conversations(
-                                        date = Timestamp(Date()),
-                                        lastMessage = null,
-                                        userIds = array
-                                    )
-                                    val message = Message(
-                                        message = "",
-                                        idSender = "",
-                                        type_message = 0,
-                                        date = Timestamp(Date())
-                                    )
-                                    val conversationRef =
-                                        Firebase.firestore.collection("conversations")
-                                            .add(conversation)
+                                val array = listOf(Firebase.auth.uid.toString(), car.owner!!.id)
 
-                                    // Get the document reference for the newly created conversation
-                                    val docRef = conversationRef.await()
-                                    Firebase.firestore.collection("conversations")
-                                        .document(docRef.id).collection("messages").add(message)
-                                        .await()
-
-                                }
-                                onMessage(car)
+                                onMessage(array)
                             },
                             modifier = Modifier
                                 .padding(8.dp)
@@ -145,7 +116,7 @@ fun itemCarView(car: Car, onClickItem: (Boolean) -> Unit, onMessage: (Car) -> Un
                         )
                     }
                     Spacer(modifier = Modifier.height(5.dp))
-                    RatingBar(rating = 0.3)
+                    RatingBar(rating = car.rating ?: 0.0)
                 }
             }
         }
