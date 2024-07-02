@@ -92,12 +92,12 @@ fun generatePDF(
         Este Acuerdo de Alquiler de Coche se celebra entre:
         
         $ownerName
-        Dirección: [Dirección del Arrendador]
+        Dirección: ${owner.location}
         
         Y
         
         $clientName
-        Dirección: [Dirección del Arrendatario]
+        Dirección: ${client.location}
         
         Detalles del coche:
         - Marca: ${car.brand.replaceFirstChar { it.uppercase() }}

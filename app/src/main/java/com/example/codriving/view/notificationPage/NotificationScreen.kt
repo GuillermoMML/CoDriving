@@ -1,6 +1,7 @@
 package com.example.codriving.view.notificationPage
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -100,6 +101,7 @@ fun notificationView(
     navController: NavController,
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
+
     val notificationThisWeek = viewModel.notificationsThisWeek.observeAsState()
     val notificationLastWeek = viewModel.notificationsLastWeek.observeAsState()
     val userNotification = viewModel.userNotification.observeAsState()
@@ -126,6 +128,8 @@ fun notificationView(
     var loadingInfo by remember {
         mutableStateOf(true)
     }
+    val pdfUri by viewModel.pdfUri.observeAsState()
+
 
     Scaffold(
         snackbarHost = {
@@ -215,7 +219,7 @@ fun notificationView(
                                             if (!file.isNullOrEmpty()) {
                                                 viewModel.acceptNotify(
                                                     "Se acepto el servicio con exito",
-                                                    it
+                                                    it,
                                                 )
                                                 viewModel.generateContract(it)
                                                 val result = snackbarHostState
@@ -276,7 +280,22 @@ fun notificationView(
                                         }
                                     }
 
-                                })
+                                },
+                                onIntentPDF = {
+                                    viewModel.downloadPDF("${it.pdfName}",
+                                        onSuccess = { pdfFile ->
+                                            viewModel.openPDF(context, pdfFile)
+                                        },
+                                        onFailure = { exception ->
+                                            Log.e(
+                                                "Error",
+                                                "Failed to download PDF: ${exception.message}"
+                                            )
+                                            // Manejar el error si falla la descarga
+                                        }
+                                    )
+                                }
+                            )
 
                         }
                         item {
@@ -306,6 +325,29 @@ fun notificationView(
 
                                     }
 
+                                },
+                                onIntentPDF = {
+                                    viewModel.downloadPDF(
+                                        pdfName = "example",
+                                        onSuccess = { pdfFile ->
+                                            val pdfUri = FileProvider.getUriForFile(
+                                                context,
+                                                context.applicationContext.packageName + ".provider",
+                                                pdfFile
+                                            )
+
+                                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                setDataAndType(pdfUri, "application/pdf")
+                                                flags =
+                                                    Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                            }
+                                            context.startActivity(intent)
+                                        },
+                                        onFailure = {
+                                            // Handle the failure case
+                                            Log.e("Error", "Failed to download PDF: ${it.message}")
+                                        }
+                                    )
                                 }
 
                             )
@@ -479,7 +521,8 @@ fun ListNotifies(
     userNotification: State<HashMap<String, RequestNotification>?>,
     onDelete: (Notification) -> Unit,
     onShowInfo: (List<DocumentReference>) -> Unit,
-    onConfirm: (Notification) -> Unit
+    onConfirm: (Notification) -> Unit,
+    onIntentPDF: (Notification) -> Unit
 ) {
 
     ElevatedCard(modifier = Modifier.padding(10.dp)) {
@@ -507,7 +550,9 @@ fun ListNotifies(
                             ) { notify ->
                                 infoNotify(
                                     notify = notify,
-                                    onCancel = { onDelete(notify) }
+                                    onCancel = { onDelete(notify) },
+                                    onIntentPDF = {}
+
                                 )
                             }
                         }
@@ -521,7 +566,8 @@ fun ListNotifies(
                             ) { notify ->
                                 infoNotify(
                                     notify = notify,
-                                    onCancel = { onDelete(notify) }
+                                    onCancel = { onDelete(notify) },
+                                    onIntentPDF = { onIntentPDF(notify) }
                                 )
                             }
 
@@ -551,8 +597,10 @@ fun ListNotifies(
 @Composable
 fun infoNotify(
     notify: Notification,
-    onCancel: (Notification) -> Unit
+    onCancel: (Notification) -> Unit,
+    onIntentPDF: (Notification) -> Unit
 ) {
+
     val message = if (notify.type == 3) "Se acepto con exito su petición" else notify.message
     var imageProfile: String
     var isRemoved by remember {
@@ -609,7 +657,9 @@ fun infoNotify(
                 if (notify.type == 3) {
                     Box(modifier = Modifier.align(Alignment.End)) {
                         IconButton(
-                            onClick = {}
+                            onClick = {
+                                onIntentPDF(notify)
+                            }
                         ) {
                             Icon(Icons.Default.Archive, contentDescription = "Info")
                         }
@@ -657,13 +707,13 @@ fun userNotifyItem(
             Box(
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
-                    .size(90.dp)
+                    .size(60.dp)
                     .clip(CircleShape)
-                    .background(Color.White)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
             ) {
                 imageProfile =
                     "https://static-00.iconduck.com/assets.00/profile-default-icon-2048x2045-u3j7s5nj.png"
-
 
                 Image(
                     painter = rememberAsyncImagePainter(
@@ -675,7 +725,7 @@ fun userNotifyItem(
                             }).build()
                     ),
                     contentDescription = "Profile image",
-                    modifier = Modifier.size(100.dp),
+                    modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             }

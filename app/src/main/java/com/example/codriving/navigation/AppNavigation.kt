@@ -54,8 +54,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
-    themeViewModel: ThemeViewModel,
-    isLogged: () -> Unit
+    themeViewModel: ThemeViewModel
 ) {
     val isLoading = mutableStateOf(true)
     val scope = rememberCoroutineScope()

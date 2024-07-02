@@ -1,10 +1,13 @@
 package com.example.codriving.view.notificationPage
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.FileProvider
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -20,6 +23,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,6 +44,8 @@ class NotificationViewModel @Inject constructor(
     private val _usersNotifications = MutableLiveData<HashMap<String, RequestNotification>>()
     private val _isLoading = MutableLiveData(true)
     private val _error = MutableLiveData("")
+    private val _pdfUri = MutableLiveData<Uri?>()
+    val pdfUri: LiveData<Uri?> get() = _pdfUri
 
 
     private var currentNotify = Notification()
@@ -253,4 +259,31 @@ class NotificationViewModel @Inject constructor(
 
         userRepository.generateContract(lastEndDate, notification)
     }
+
+    fun downloadPDF(pdfName: String, onSuccess: (File) -> Unit, onFailure: (Exception) -> Unit) {
+        viewModelScope.launch {
+            try {
+                firebaseStorageRepository.downloadPDF(pdfName, onSuccess = {
+                    onSuccess(it)
+                }, onFailure)
+            } catch (e: Exception) {
+                onFailure(e)
+            }
+        }
+    }
+
+    fun openPDF(context: Context, pdfFile: File) {
+        val pdfUri = FileProvider.getUriForFile(
+            context,
+            context.applicationContext.packageName + ".provider",
+            pdfFile
+        )
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(pdfUri, "application/pdf")
+            flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_GRANT_READ_URI_PERMISSION
+        }
+        context.startActivity(intent)
+    }
+
 }

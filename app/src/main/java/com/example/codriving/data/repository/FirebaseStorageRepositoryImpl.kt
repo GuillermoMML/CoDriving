@@ -5,6 +5,7 @@ import android.util.Log
 import com.example.codriving.data.model.Notification
 import com.google.android.gms.tasks.Task
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
@@ -47,6 +48,24 @@ class FirebaseStorageRepositoryImpl @Inject constructor(
                 Log.e("Sucessfull", "PDF uploaded")
 
             }
+
+    }
+
+    override suspend fun downloadPDF(
+        pdfName: String,
+        onSuccess: (File) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val storageRef = storage.reference.child("rentingPDF/$pdfName.pdf")
+        val localFile = File.createTempFile("rentingPDF", "pdf")
+
+        try {
+            storageRef.getFile(localFile).await()
+            onSuccess(localFile)
+        } catch (e: Exception) {
+            Log.e("FirebaseStorage", "Failed to download PDF: ${e.message}")
+            throw e
+        }
 
     }
 

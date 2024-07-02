@@ -213,26 +213,27 @@ class UploadCarRepository @Inject constructor(
 
         for (rentCarRef in listDocument) {
             val rentCarDocument = rentCarRef!!.get().await()
-            val documentId = rentCarDocument  // Get the document ID as the key
+            val busy = rentCarDocument["busy"] as? Boolean
+                ?: true // Default to true if "busy" is not present or null
 
-            val rentCar = RentCars(
-                carId = rentCarDocument["carId"] as DocumentReference,
-                ownerName = rentCarDocument["ownerName"] as String,
-                pricePerDay = rentCarDocument["pricePerDay"] as Double,
-                startDate = rentCarDocument["startDate"] as Timestamp,
-                endDate = rentCarDocument["endDate"] as Timestamp,
-                busy = rentCarDocument["busy"] as Boolean
-            )
-            rentCarsMap[documentId.reference] =
-                rentCar  // Add RentCar to map with document ID as key
+            if (!busy) {
+                val documentId = rentCarDocument  // Get the document ID as the key
+
+                val rentCar = RentCars(
+                    carId = rentCarDocument["carId"] as DocumentReference,
+                    ownerName = rentCarDocument["ownerName"] as String,
+                    pricePerDay = rentCarDocument["pricePerDay"] as Double,
+                    startDate = rentCarDocument["startDate"] as Timestamp,
+                    endDate = rentCarDocument["endDate"] as Timestamp,
+                    busy = rentCarDocument["busy"] as Boolean
+                )
+                rentCarsMap[documentId.reference] =
+                    rentCar  // Add RentCar to map with document ID as key
+            }
         }
 
-
         return rentCarsMap
-
-
     }
-
     suspend fun publishRentCar(carIdwithBrackets: String, start: Date, end: Date, price: String) {
         try {
 

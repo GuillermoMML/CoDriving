@@ -50,7 +50,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -67,8 +66,8 @@ import com.example.codriving.data.model.RentCars
 import com.example.codriving.data.model.RentReview
 import com.example.codriving.data.model.User
 import com.example.codriving.navigation.AppScreens
-import com.example.codriving.view.MyCarsPage.LoadScreen
 import com.example.codriving.ui.theme.md_theme_light_surfaceTint
+import com.example.codriving.view.MyCarsPage.LoadScreen
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
@@ -98,11 +97,10 @@ fun RentCarScreen(
     val listOfRents = rentCarViewModel.listOfRents.observeAsState()
     val ownerUser = rentCarViewModel.ownerUser.observeAsState()
     val listOfReview = rentCarViewModel.listOfReviews.observeAsState(emptyMap())
+
     LaunchedEffect(idRentCar) {
         rentCarViewModel.loadData(idRentCar!!)
     }
-
-
     if (isLoading == false) {
         LoadScreen()
     } else {
@@ -142,7 +140,7 @@ fun RentCarScreen(
                                     rentCarViewModel,
                                     it1,
                                     car!!,
-                                    ownerUser.value?.fullName!!,
+                                    ownerUser.value!!,
                                     listOfReview.value,
                                     onClickConversation = {
                                         navController.navigate(AppScreens.ConversationScreen.route)
@@ -201,7 +199,7 @@ fun bodyRest(
     viewModel: RentCarViewModel,
     rentCars: List<RentCars>,
     car: Car,
-    ownerName: String,
+    ownerUser: User,
     listofReview: Map<User, RentReview>,
     onClickBook: () -> Unit,
     onClickConversation: () -> Unit
@@ -224,67 +222,81 @@ fun bodyRest(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            ExpandableItem(title = "Time Availables", expanded = rentTimes, content = {
-                Column {
-                    rentCars.forEach {
-                        if (it.busy != true) {
-                            val startDate: Date = it.startDate.toDate()
-                            val endDate: Date = it.endDate.toDate()
+            if (rentCars.isEmpty()) {
+                Text(
+                    text = "Not Available Dates",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = 20.sp
+                )
+            } else {
+                ExpandableItem(title = "Time Available", expanded = rentTimes, content = {
+                    Column {
+                        rentCars.forEach {
+                            if (it.busy != true) {
+                                val startDate: Date = it.startDate.toDate()
+                                val endDate: Date = it.endDate.toDate()
 
-                            val starformattedDate: String = dateFormat.format(startDate)
-                            val endformattedDate: String = dateFormat.format(endDate)
+                                val startformattedDate: String = dateFormat.format(startDate)
+                                val endformattedDate: String = dateFormat.format(endDate)
 
-                            Row {
-                                Text(
-                                    text = it.pricePerDay.toString() + "€/day " + starformattedDate + " - " + endformattedDate,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
+                                Row {
+                                    Text(
+                                        text = it.pricePerDay.toString() + "€/day " + startformattedDate + " - " + endformattedDate,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
 
+                                }
                             }
+
+
                         }
-
-
                     }
-                }
 
-            }, onClick = { rentTimes.value = !rentTimes.value })
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_background),
-                        contentDescription = "Owner profile Image",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .clip(CircleShape)
+                }, onClick = { rentTimes.value = !rentTimes.value })
 
-                    )
-                }
-                Column(
-                    modifier = Modifier
-                        .padding(start = 5.dp)
-                        .weight(2f)
-                ) {
-                    Text(
-                        text = "Owner",
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(text = ownerName)
-                }
             }
         }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(100.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(
+                            LocalContext.current
+                        ).data(data = ownerUser.imageProfile)
+                            .apply(block = fun ImageRequest.Builder.() {
+                                crossfade(true)
+                            }).build()
+                    ),
+                    contentDescription = "Owner Profile Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .fillMaxSize()
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .padding(start = 5.dp)
+                    .weight(2f)
+            ) {
+                Text(
+                    text = "Owner",
+                    fontWeight = FontWeight.Bold,
+                )
+                ownerUser.fullName?.let { Text(text = it) }
+            }
+        }
+
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
@@ -304,7 +316,7 @@ fun bodyRest(
                 Text(text = stringResource(R.string.contact_owner))
             }
             FilledTonalButton(
-                enabled = !car.owner?.id.equals(Firebase.auth.uid),
+                enabled = !car.owner?.id.equals(Firebase.auth.uid) && rentCars.isNotEmpty(),
                 onClick = {
                     onClickBook()
                 }) {
@@ -408,6 +420,7 @@ fun CarouselCard(bannerUrls: List<String>) {
                 state = pageState,
                 key = { it },
             ) { index ->
+
                 Image(
                     painter = rememberAsyncImagePainter(bannerUrls[index]),
                     contentDescription = null,

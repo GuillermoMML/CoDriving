@@ -9,7 +9,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.codriving.data.repository.UploadCarRepository
 import com.example.codriving.data.repository.UserRepository
 import com.example.codriving.navigation.AppNavigation
-import com.example.codriving.navigation.AppScreens
 import com.example.codriving.ui.theme.CoDrivingTheme
 import com.example.codriving.ui.theme.ThemeViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -60,9 +59,7 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface {
                     val navController = rememberNavController()
-                    AppNavigation(navController, themeViewModel) {
-                        navController.navigate(AppScreens.LoginScreen.route)
-                    }
+                    AppNavigation(navController, themeViewModel)
 
                 }
             }

@@ -13,5 +13,7 @@ data class Notification(
     val message: String? = "",
     val timestamp: Timestamp? = Timestamp(Date()),
     var type: Int = 0, //tipo = 1 usuarios interesado , tipo 2  = informativo
-    val rentsCars: List<DocumentReference> = emptyList()
-)
+    val rentsCars: List<DocumentReference> = emptyList(),
+    val pdfName: String? = "",
+
+    )

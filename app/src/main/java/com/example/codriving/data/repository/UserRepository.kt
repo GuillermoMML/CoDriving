@@ -193,7 +193,8 @@ class UserRepository @Inject constructor(
             title = "Tiene una nueva solicitud",
             message = message,
             timestamp = Timestamp(Date()),
-            type = 3
+            type = 3,
+            pdfName = removeNotify.idNotification
         )
         notificationCarCollection
             .add(notifyProductInfo)
@@ -274,6 +275,7 @@ class UserRepository @Inject constructor(
 
     }
 
+    @Throws(FileNotFoundException::class)
     suspend fun getContractsByUser(
         auth: String,
         onSuccess: (List<Contracts>) -> Unit,
@@ -293,12 +295,10 @@ class UserRepository @Inject constructor(
             if (contracts.isNotEmpty()) {
                 onSuccess(contracts.toList())
 
-            } else {
-                onFailure(throw FileNotFoundException("No se encontro ningun contrato"))
-            }
+            } else onFailure(throw FileNotFoundException("No se encontro ningun contrato"))
         } catch (e: Exception) {
             onFailure(
-                 e
+                e
             )
         }
 
