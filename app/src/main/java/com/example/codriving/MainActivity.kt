@@ -59,9 +59,11 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface {
                     val navController = rememberNavController()
+
                     AppNavigation(navController, themeViewModel)
 
                 }
+
             }
         }
     }

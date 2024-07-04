@@ -49,6 +49,7 @@ object AppModule {
     fun provideUserRepository(firestore: FirebaseFirestore): UserRepository {
         return UserRepository(firestore)
     }
+
     @Provides
     @Singleton
     fun provideSearchRepository(firestore: FirebaseFirestore): SearchRepository {
@@ -78,11 +79,11 @@ object AppModule {
     fun provideFirebaseStorage(): FirebaseStorage {
         return Firebase.storage
     }
+
     @Provides
     @Singleton
     fun provideFirebaseStorageRepository(storage: FirebaseStorage): FirebaseStorageRepository {
         return FirebaseStorageRepositoryImpl(storage)
     }
-
 
 }

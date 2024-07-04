@@ -1,6 +1,8 @@
 package com.example.codriving.common
 
 
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -9,10 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.IconButton
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.ModalBottomSheetLayout
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -23,6 +22,7 @@ import androidx.compose.material3.DateRangePickerState
 import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
@@ -43,16 +43,15 @@ import java.util.Date
 
 @Composable
 fun PrecioTextField(
-    modifier: Modifier = Modifier.padding(15.dp),
     value: String,
     onValueChange: (String) -> Unit,
-    label: String = "Precio",
+    label: String = "Price per day",
     isError: Boolean = false,
 ) {
     val precioRegex = Regex("[0-9]+")
 
     OutlinedTextField(
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth(),
         value = value,
         onValueChange = { newValue ->
             if (precioRegex.matches(newValue)) {

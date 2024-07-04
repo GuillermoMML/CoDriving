@@ -1,4 +1,6 @@
 package com.example.codriving.ui.theme
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 val md_theme_light_primary = Color(0xFF0061A4)
@@ -62,3 +64,10 @@ val md_theme_dark_shadow = Color(0xFF000000)
 val md_theme_dark_surfaceTint = Color(0xFF9ECAFF)
 val md_theme_dark_outlineVariant = Color(0xFF43474E)
 val md_theme_dark_scrim = Color(0xFF000000)
+
+val degradadobackgroundDark = Brush.linearGradient(
+    0.0f to Color(0xFF0748AB),
+    1.0f to Color.Black,
+    start = Offset.Zero,
+    end = Offset.Infinite
+)

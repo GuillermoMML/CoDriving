@@ -1,6 +1,14 @@
 package com.example.codriving.view.MyCarsPage
 
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,19 +23,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.ModalBottomSheetValue
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.Search
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -43,6 +50,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -70,6 +79,8 @@ import com.example.codriving.common.getFormattedDateNoYear
 import com.example.codriving.data.model.Car
 import com.example.codriving.navigation.AppScreens
 import com.example.codriving.ui.theme.md_theme_dark_onTertiary
+import com.example.codriving.view.AddressAutoComplete.AddressAutocompleteScreen
+import com.example.codriving.view.AddressAutoComplete.AddressAutocompleteViewModel
 import kotlinx.coroutines.launch
 
 
@@ -219,120 +230,148 @@ fun DialogWithImage(
     onConfirmation: () -> Unit,
     onShowDatePicker: (Boolean) -> Unit,
 ) {
+    var pickUp by remember { mutableStateOf("") }
+    var dropoff by remember { mutableStateOf("") }
     var precio by remember { mutableStateOf("") }
-    val startDay = viewModel.startDay.collectAsState()
-    val endDay = viewModel.endDay.collectAsState()
-    val UploadRent = remember {
-        mutableStateOf(false)
-    }
+    val startDay by viewModel.startDay.collectAsState()
+    val endDay by viewModel.endDay.collectAsState()
+    val isUploadingRent = remember { mutableStateOf(false) }
+    var sameDropOff by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val actualCar = item.values.first()
-    // Draw a rectangle shape with rounded corners inside the dialog
+    val viewModelPickUp = AddressAutocompleteViewModel()
+    val viewModelDropOff = AddressAutocompleteViewModel()
+
+
     Card(
         modifier = Modifier
-            .height(500.dp)
             .zIndex(1f)
             .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
     ) {
-        if (viewModel.isLoadPublished.value!!) {
+        if (viewModel.isLoadPublished.value == true) {
             Column(
-                modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
+                modifier = Modifier.size(200.dp),
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                Text(text = "Se ha publicado correctamente")
-                OutlinedButton(onClick = { onConfirmation() }) {
+                Text(text = "It has been published successfully\n")
+                OutlinedButton(onClick = onConfirmation) {
                     Text(text = "Ok")
                 }
             }
-
         } else {
-            if (!UploadRent.value) {
+            if (!isUploadingRent.value) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-
                     AsyncImage(
                         model = actualCar.image[0],
                         contentDescription = "Car Image",
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .height(160.dp)
+                        modifier = Modifier.height(160.dp)
                     )
                     Text(
                         text = actualCar.model,
                         modifier = Modifier.padding(16.dp),
                     )
                     Column(
+                        modifier = Modifier.padding(15.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Row(
-                            Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Price per Day: ")
-                            PrecioTextField(
-                                value = precio,
-                                onValueChange = { nuevoPrecio ->
-                                    precio = nuevoPrecio
-                                    viewModel.updatePrice(nuevoPrecio)
+                            Text(text = "Same Drop Off", modifier = Modifier.padding(end = 5.dp))
+                            Switch(
+                                checked = sameDropOff,
+                                onCheckedChange = { sameDropOff = it },
+                                thumbContent = {
+                                    Icon(
+                                        imageVector = if (sameDropOff) Icons.Filled.Check else Icons.Filled.Close,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
                                 }
                             )
-
                         }
+                        AddressAutocompleteScreen(
+                            labelHolder = if (sameDropOff) "Pick Up / Drop off" else "Pick Up",
+                            returnQuery = {
+                                if (sameDropOff) {
+                                    dropoff = it
+                                }
+                                pickUp = it
+                            },
+                            viewModel = viewModelPickUp
+                        )
+                        AnimatedVisibility(
+                            visible = !sameDropOff,
+                            enter = fadeIn(),
+                            exit = fadeOut() + slideOutVertically() + shrinkVertically()
+                        ) {
+                            AddressAutocompleteScreen(
+                                labelHolder = "Drop off",
+                                returnQuery = { dropoff = it },
+                                viewModel = viewModelDropOff
 
+                            )
+                        }
+                        PrecioTextField(
+                            value = precio,
+                            onValueChange = { nuevoPrecio ->
+                                precio = nuevoPrecio
+                                viewModel.updatePrice(nuevoPrecio)
+                            }
+                        )
                         Row(verticalAlignment = Alignment.CenterVertically) {
-
                             TextButton(onClick = { onShowDatePicker(true) }) {
                                 Text(text = "Select Dates")
                             }
                             Text(
-                                "${getFormattedDateNoYear(startDay.value.time)}-${
+                                "${getFormattedDateNoYear(startDay.time)} - ${
                                     getFormattedDateNoYear(
-                                        endDay.value.time
+                                        endDay.time
                                     )
                                 }"
                             )
                         }
-
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center,
                         ) {
                             OutlinedButton(
-                                onClick = { onDismissRequest() },
+                                onClick = onDismissRequest,
                                 modifier = Modifier.padding(8.dp),
                             ) {
                                 Text("Cancel")
                             }
-
                             OutlinedButton(
                                 onClick = {
                                     coroutineScope.launch {
-                                        UploadRent.value = true
-                                        viewModel.verifyPublishFields(idCar = item.keys.toString())
-                                        UploadRent.value = false
+                                        isUploadingRent.value = true
+                                        viewModel.verifyPublishFields(
+                                            idCar = item.keys.first(),
+                                            pickUp,
+                                            dropoff
+                                        )
+                                        isUploadingRent.value = false
                                     }
                                 },
-                                enabled = !UploadRent.value,
+                                enabled = !isUploadingRent.value,
                                 modifier = Modifier.padding(8.dp),
                             ) {
                                 Text("Publish")
                             }
                         }
-
                     }
                 }
-
             } else {
                 LoadScreen()
-
             }
         }
     }

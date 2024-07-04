@@ -234,7 +234,15 @@ class UploadCarRepository @Inject constructor(
 
         return rentCarsMap
     }
-    suspend fun publishRentCar(carIdwithBrackets: String, start: Date, end: Date, price: String) {
+
+    suspend fun publishRentCar(
+        carIdwithBrackets: String,
+        start: Date,
+        end: Date,
+        price: String,
+        pickUp: String,
+        dropoff: String
+    ) {
         try {
 
             val carId = carIdwithBrackets.replace(Regex("\\[(.*?)\\]"), "$1")
@@ -256,7 +264,9 @@ class UploadCarRepository @Inject constructor(
                 endDate = endStamp,
                 startDate = startStamp,
                 ownerName = ownerName,
-                pricePerDay = price.toDouble()
+                pricePerDay = price.toDouble(),
+                pickUpLocation = pickUp,
+                dropOffLocation = dropoff
             )
 
             val rentDocRef = firestore.collection("RentCar").document()

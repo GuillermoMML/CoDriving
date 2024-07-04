@@ -26,9 +26,9 @@ class SearchPageViewModel @Inject constructor(
 
 
 
-    suspend fun getRentsFromRange(startDate:Date,endDate:Date){
+    suspend fun getRentsFromRange(startDate: Date, endDate: Date, pickUp: String, dropOff: String) {
         _isLoading.value = true
-        _rentListCar.value = searchRepository.findAvailableCars(startDate,endDate)
+        _rentListCar.value = searchRepository.findAvailableCars(startDate, endDate, pickUp, dropOff)
 
         _carListEnables.value = searchRepository.getCarReferences(rentCars = _rentListCar.value)
         _isLoading.value = false

@@ -29,6 +29,11 @@ class HomeViewModel @Inject constructor(
         MutableStateFlow(Date(OffsetDateTime.now().plusDays(8).toInstant().toEpochMilli()))
     val selectedEndDay: MutableStateFlow<Date> get() = _selectedEndDay
 
+    private val _pickUp = MutableStateFlow(String())
+    val pickUp: MutableStateFlow<String> get() = _pickUp
+
+    private val _dropOff = MutableStateFlow(String())
+    val dropOff: MutableStateFlow<String> get() = _dropOff
 
     private val _mostRated = MutableLiveData<HashMap<String, Car>>()
     val mostRated: LiveData<HashMap<String, Car>> get() = _mostRated
@@ -162,6 +167,11 @@ class HomeViewModel @Inject constructor(
         _mostRated.value = uploadCarRepository.getMostRatingCars(index)
         delay(1000)
         _isLoadingMoreData.value = false
+    }
+
+    fun setPickUpandDropOff(pickUp: String, dropOff: String) {
+        _pickUp.value = pickUp
+        _dropOff.value = dropOff
     }
 
 }

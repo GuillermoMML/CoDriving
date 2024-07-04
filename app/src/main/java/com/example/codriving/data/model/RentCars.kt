@@ -9,5 +9,8 @@ data class RentCars(
     val busy: Boolean? = false,
     val pricePerDay: Double = 0.0,
     val startDate: com.google.firebase.Timestamp,
-    val endDate: com.google.firebase.Timestamp
+    val endDate: com.google.firebase.Timestamp,
+    val pickUpLocation: String? = "",
+    val dropOffLocation: String? = ""
+
 )

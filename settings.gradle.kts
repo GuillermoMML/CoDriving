@@ -12,7 +12,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven {
-            url = uri("https://jitpack.io")
+            url = uri("https://repositories.tomtom.com/artifactory/maven")
         }
     }
 }

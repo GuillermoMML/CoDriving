@@ -13,35 +13,63 @@ import javax.inject.Inject
 
 class SearchRepository @Inject constructor(private val firestore: FirebaseFirestore) {
 
-    suspend fun findAvailableCars(startDate: Date, endDate: Date): List<RentCars> {
+    suspend fun findAvailableCars(
+        startDate: Date,
+        endDate: Date,
+        pickUp: String,
+        dropOff: String
+    ): List<RentCars> {
 
         val firebaseStartDate = Timestamp(startDate)
         val firebaseEndDate = Timestamp(endDate)
 
-        // Crear una consulta que filtre por rango de fechas
+        // Realizar la consulta a Firestore
         val query = firestore.collection("RentCar")
             .whereGreaterThanOrEqualTo("startDate", firebaseStartDate)
             .whereLessThanOrEqualTo("endDate", firebaseEndDate)
-             // Add .distinct() for filtering duplicates based on carId
 
-        // Ejecutar la consulta y obtener los resultados
         val snapshot = query.get().await()
 
         // Mapear los documentos a objetos RentCars
-        val cars = snapshot.documents.map { document ->
+        val cars = snapshot.documents.mapNotNull { document ->
+            val carId = document["carId"] as? DocumentReference ?: return@mapNotNull null
+            val ownerName = document["ownerName"] as? String ?: return@mapNotNull null
+            val busy = document["busy"] as? Boolean ?: return@mapNotNull null
+
+            val pricePerDay = document["pricePerDay"] as? Double ?: return@mapNotNull null
+            val startDate = document["startDate"] as? Timestamp ?: return@mapNotNull null
+            val endDate = document["endDate"] as? Timestamp ?: return@mapNotNull null
+            val pickUpLocation = document["pickUpLocation"] as? String
+            val dropOffLocation = document["dropOffLocation"] as? String
+
             RentCars(
-                carId = document["carId"] as DocumentReference,
-                ownerName = document["ownerName"] as String,
-                pricePerDay = document["pricePerDay"] as Double,
-                startDate = document["startDate"] as Timestamp,
-                endDate = document["endDate"] as Timestamp
+                carId,
+                ownerName,
+                busy,
+                pricePerDay,
+                startDate,
+                endDate,
+                pickUpLocation,
+                dropOffLocation
             )
         }
-        val deduplicatedCars = cars.distinctBy { it.carId }
 
-        // Devolver la lista de RentCars
-        return deduplicatedCars
+        // Filtrar los autos en memoria según las condiciones parciales
+        val filteredCars = cars.filter { car ->
+            (pickUp.isBlank() || car.pickUpLocation?.contains(
+                pickUp,
+                ignoreCase = true
+            ) ?: false) &&
+                    (dropOff.isBlank() || car.dropOffLocation?.contains(
+                        dropOff,
+                        ignoreCase = true
+                    ) ?: false)
+        }.distinctBy { it.carId }
+
+        // Devolver la lista de RentCars filtrada
+        return filteredCars
     }
+
 
     suspend fun getCarReferences(rentCars: List<RentCars>): HashMap<String, Car> {
 

@@ -298,7 +298,7 @@ class UserRepository @Inject constructor(
             } else onFailure(throw FileNotFoundException("No se encontro ningun contrato"))
         } catch (e: Exception) {
             onFailure(
-                e
+                 e
             )
         }
 

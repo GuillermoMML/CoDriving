@@ -57,7 +57,11 @@ import com.example.codriving.data.model.Year
 
 
 @Composable
-fun CarsFormScreen(navController: NavHostController, viewModel: CarsFormViewModel = hiltViewModel(), car: String? = null) {
+fun CarsFormScreen(
+    navController: NavHostController,
+    viewModel: CarsFormViewModel = hiltViewModel(),
+    car: String? = null
+) {
 
     val marcaList by viewModel.marcaList.collectAsState() // Use collectAsState for StateFlow
     val modelsList by viewModel.modelList.collectAsState()
@@ -117,7 +121,7 @@ fun CarsFormScreen(navController: NavHostController, viewModel: CarsFormViewMode
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .fillMaxHeight(0.310f)
+                                    .fillMaxHeight(0.210f)
                                     .paint(
                                         painterResource(id = R.drawable.banneruploadcar),
                                         contentScale = ContentScale.FillBounds
@@ -134,7 +138,7 @@ fun CarsFormScreen(navController: NavHostController, viewModel: CarsFormViewMode
                             }
                         }
 
-                        if(Car !=null){
+                        if (Car != null) {
                             item {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -165,7 +169,7 @@ fun CarsFormScreen(navController: NavHostController, viewModel: CarsFormViewMode
                                         selectedImageUris.toMutableList().apply { add(uri) }
                                 }
                             }
-                        }else {
+                        } else {
                             item {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -187,7 +191,6 @@ fun CarsFormScreen(navController: NavHostController, viewModel: CarsFormViewMode
                             }
                             item {
                                 val years = (1980..2024).map { Year(it) }
-
                                 YearDropDown(viewModel, years)
                             }
                             item {
@@ -204,9 +207,7 @@ fun CarsFormScreen(navController: NavHostController, viewModel: CarsFormViewMode
                             ) {
                                 Button(
                                     onClick = {
-
                                         viewModel.uploadCar(selectedImageUris)
-
                                     }, // Llamar al método en el ViewModel para subir las imágenes
                                     enabled = validateField!! && !isLoading!! && selectedImageUris.isNotEmpty(), // Deshabilitar el botón si no hay imágenes seleccionadas
                                     content = {

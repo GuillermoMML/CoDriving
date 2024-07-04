@@ -34,6 +34,9 @@ class SignInViewModel @Inject constructor(private val repository: FirebaseAuthRe
     private val _password = MutableLiveData<String>()
     val password: LiveData<String> get() = _password
 
+    private val _repeatPassword = MutableLiveData<String>()
+    val repeatPassword: LiveData<String> get() = _repeatPassword
+
     private val _loginEnable = MutableLiveData<Boolean>()
     val loginEnable: LiveData<Boolean> get() = _loginEnable
 
@@ -78,14 +81,17 @@ class SignInViewModel @Inject constructor(private val repository: FirebaseAuthRe
         password: String,
         fullname: String,
         phone: String,
-        location: String
+        location: String,
+        repeatPassword: String
     ) {
         _email.value = email
         _password.value = password
         _location.value = location
-        _loginEnable.value = isValidEmail(email) && isValidPassword(password)
+        _loginEnable.value =
+            isValidEmail(email) && isValidPassword(password) && password.equals(repeatPassword)
         _fullname.value = fullname
         _phone.value = phone
+        _repeatPassword.value = repeatPassword
 
     }
 

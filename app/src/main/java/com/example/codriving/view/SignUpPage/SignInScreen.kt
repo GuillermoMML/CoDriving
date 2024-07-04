@@ -1,6 +1,7 @@
 package com.example.codriving.view.SignUpPage
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
@@ -43,6 +43,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.codriving.R
 import com.example.codriving.navigation.AppScreens
+import com.example.codriving.ui.theme.degradadobackgroundDark
+import com.example.codriving.view.AddressAutoComplete.AddressAutocompleteScreen
+import com.example.codriving.view.AddressAutoComplete.AddressAutocompleteViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -53,6 +56,8 @@ fun SignScreen(
 
     val email: String by viewModel.email.observeAsState("")
     val password: String by viewModel.password.observeAsState("")
+    val repeatPassword: String by viewModel.repeatPassword.observeAsState("")
+
     val location: String by viewModel.location.observeAsState("")
     val name: String by viewModel.fullname.observeAsState("")
     val phone: String by viewModel.phone.observeAsState("")
@@ -61,6 +66,8 @@ fun SignScreen(
     val errorMessage: String by viewModel.errorMessage.observeAsState("")
     val showError = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val addressViewModel: AddressAutocompleteViewModel = hiltViewModel()
+
 
 
     if (showError.value) {
@@ -69,7 +76,7 @@ fun SignScreen(
                 showError.value = false
             },
             title = { Text(text = "Error") },
-            text = {  Text(text = errorMessage)  },
+            text = { Text(text = errorMessage) },
             confirmButton = {
                 Button(onClick = {
                     showError.value = false
@@ -83,6 +90,7 @@ fun SignScreen(
     Column(
         Modifier
             .fillMaxSize()
+            .background(degradadobackgroundDark)
             .padding(20.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -90,14 +98,14 @@ fun SignScreen(
         Box(
             Modifier
                 .fillMaxWidth()
-                .weight(0.5F),
+                .weight(0.35F),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ecofamily), // Usa tu recurso de imagen aquí
                 contentDescription = "App",
                 modifier = Modifier
-                    .size(200.dp)
+                    .size(175.dp)
                     .clip(RoundedCornerShape(10.dp))
             )
         }
@@ -116,14 +124,15 @@ fun SignScreen(
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Face,
-                        contentDescription = "UserIcon"
+                        contentDescription = "UserName",
+                        //tint = MaterialTheme.colorScheme.secondary,
                     )
                 },
                 singleLine = true,
                 label = { Text(text = "Username") },
                 placeholder = { Text(text = "Enter your username") },
                 onValueChange = {
-                    viewModel.onSignChange(email, password, it, phone, location)
+                    viewModel.onSignChange(email, password, it, phone, location, repeatPassword)
                 },
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -136,7 +145,8 @@ fun SignScreen(
                         password,
                         name,
                         phone,
-                        location
+                        location,
+                        repeatPassword
                     )
                 })
 
@@ -155,32 +165,55 @@ fun SignScreen(
                 label = { Text(text = "Number (no obligatory)") },
                 placeholder = { Text(text = "Enter your username") },
                 onValueChange = {
-                    viewModel.onSignChange(email, password, name, it, location)
+                    viewModel.onSignChange(email, password, name, it, location, repeatPassword)
                 },
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = location,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Location"
-                    )
-                },
-                singleLine = true,
-                label = { Text(text = "Enter your location") },
-                placeholder = { Text(text = "Enter your location") },
-                onValueChange = {
-                    viewModel.onSignChange(email, password, name, phone, it)
-                },
-            )
+            AddressAutocompleteScreen("Search location", returnQuery = {
+                viewModel.onSignChange(email, password, name, phone, it, repeatPassword)
+            }, viewModel = addressViewModel)
+
             Spacer(modifier = Modifier.height(16.dp))
 
             SignInFieldPassword(
                 password = password,
-                onTextFieldChanged = { viewModel.onSignChange(email, it, name, phone, location) })
+                onTextFieldChanged = {
+                    viewModel.onSignChange(
+                        email,
+                        it,
+                        name,
+                        phone,
+                        location,
+                        repeatPassword
+                    )
+                })
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            RepeatPasswordField(
+                repeatPassword = repeatPassword,
+                onRepeatPasswordChanged = {
+                    viewModel.onSignChange(
+                        email,
+                        password,
+                        name,
+                        phone,
+                        location,
+                        it
+                    )
+                }
+            )
+
+            // Mensaje de error si las contraseñas no coinciden
+            if (password.isNotEmpty() && repeatPassword.isNotEmpty() && password != repeatPassword) {
+                Text(
+                    text = "Passwords do not match",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
 
             SignInButton(
                 loginEnable,
@@ -188,12 +221,12 @@ fun SignScreen(
             ) {
                 coroutineScope.launch {
                     viewModel.signIn(email = email, password = password) { success ->
-                    if (success) {
-                        navController.navigate(AppScreens.LoginScreen.route)
-                    } else {
-                        showError.value = true
+                        if (success) {
+                            navController.navigate(AppScreens.LoginScreen.route)
+                        } else {
+                            showError.value = true
+                        }
                     }
-                }
                 }
             }
             Column(
@@ -202,7 +235,7 @@ fun SignScreen(
                     .weight(1F),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if(loading){
+                if (loading) {
                     CircularProgressIndicator(
                         modifier = Modifier.width(64.dp),
                         color = MaterialTheme.colorScheme.secondary,
@@ -242,6 +275,30 @@ fun SignInFieldPassword(password: String, onTextFieldChanged: (String) -> Unit) 
     )
 
 }
+
+@Composable
+fun RepeatPasswordField(
+    repeatPassword: String,
+    onRepeatPasswordChanged: (String) -> Unit
+) {
+    OutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        value = repeatPassword,
+        onValueChange = { onRepeatPasswordChanged(it) },
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = "RepeatPassword"
+            )
+        },
+        singleLine = true,
+        label = { Text(text = "Repeat Password") },
+        placeholder = { Text(text = "Repeat your password") }
+    )
+}
+
 
 @Composable
 fun SignInFieldEmail(email: String, onTextFieldChanged: (String) -> Unit) {

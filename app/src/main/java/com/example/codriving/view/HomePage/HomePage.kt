@@ -1,6 +1,10 @@
 package com.example.codriving.view.HomePage
 
 
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,18 +20,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.ModalBottomSheetState
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.ModalBottomSheetValue
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Switch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -71,6 +71,8 @@ import com.example.codriving.common.itemCarView
 import com.example.codriving.navigation.AppScreens
 import com.example.codriving.navigation.initialLoadingScreen
 import com.example.codriving.ui.theme.ThemeViewModel
+import com.example.codriving.view.AddressAutoComplete.AddressAutocompleteScreen
+import com.example.codriving.view.AddressAutoComplete.AddressAutocompleteViewModel
 import com.example.codriving.view.HomePage.navigationBar.navigationBar
 import com.example.codriving.view.MyCarsPage.LoadScreen
 import com.example.codriving.view.SearchPage.SearchPageScreen
@@ -270,9 +272,7 @@ fun HomePage(
                         viewModel,
                         bottomSheetState,
                         onSearch = {
-                            isSearching = false
-
-                            isSearching = true
+                            isSearching = !isSearching
                         },
                         onLogOut = {
                             if (viewModel.logOut()) {
@@ -332,6 +332,8 @@ fun HomePage(
                             }
                         } else {
                             SearchPageScreen(
+                                pickUp = viewModel.pickUp.value,
+                                dropOff = viewModel.dropOff.value,
                                 startTime = viewModel.selectedStartDay.value,
                                 endTime = viewModel.selectedEndDay.value,
                                 goBack = { isSearching = false },
@@ -369,6 +371,11 @@ fun HeaderHome(
 ) {
     val selectstartDay = viewModel.selectedStartDay.collectAsState()
     val selectEndDay = viewModel.selectedEndDay.collectAsState()
+    val pickUp = viewModel.pickUp.collectAsState("")
+    val dropOff = viewModel.dropOff.collectAsState("")
+    val viewModelPickUp = AddressAutocompleteViewModel()
+    val viewModelDropOff = AddressAutocompleteViewModel()
+
     val expanded = remember {
         mutableStateOf(false)
     }
@@ -451,27 +458,54 @@ fun HeaderHome(
             },
             scrollBehavior = scrollBehavior,
         )
-        Row(
-            Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Finder(
-                viewModel = viewModel,
-                selectStartDay = selectstartDay,
-                selectEndDay = selectEndDay,
+        Column {
+            Box(
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp),
+                contentAlignment = Alignment.Center
             ) {
-                coroutineScope.launch {
-                    bottomSheetState.show()
-                }
-            }
-            IconButton(
-                onClick = { onSearch() },
-            ) {
-                Icon(Icons.Filled.Search, contentDescription = null)
-            }
+                Column {
+                    AddressAutocompleteScreen(
+                        "Pick Up",
+                        returnQuery = {
+                            viewModel.setPickUpandDropOff(it, dropOff.value)
+                        },
+                        viewModel = viewModelPickUp
 
+                    )
+
+                    AddressAutocompleteScreen(
+                        "Drop Off",
+                        returnQuery = {
+                            viewModel.setPickUpandDropOff(pickUp.value, it)
+                        },
+                        viewModel = viewModelDropOff
+                    )
+                }
+
+            }
+            Row(
+                Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Finder(
+                    viewModel = viewModel,
+                    selectStartDay = selectstartDay,
+                    selectEndDay = selectEndDay,
+                ) {
+                    coroutineScope.launch {
+                        bottomSheetState.show()
+                    }
+                }
+                IconButton(
+                    onClick = { onSearch() },
+                ) {
+                    Icon(Icons.Filled.Search, contentDescription = null)
+                }
+
+
+            }
 
         }
     }

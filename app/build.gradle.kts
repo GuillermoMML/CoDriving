@@ -1,12 +1,13 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id ("kotlin-kapt")
+    id("kotlin-kapt")
     id("dagger.hilt.android.plugin")
     id("com.google.gms.google-services")
 }
 
 
+val geocode: String by project
 
 android {
     namespace = "com.example.codriving"
@@ -14,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.codriving"
-        minSdk = 24
+        minSdk = 26 //24yy
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
@@ -23,11 +24,21 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Lee la clave de API desde local.properties
+        val geocodeApiKey = project.findProperty("geocode")
+
+        // Configura la clave de API para la compilación
+        buildConfigField("String", "GEOCODE_API_KEY", "\"${geocodeApiKey}\"")
+
     }
 
 
     buildTypes {
         release {
+
+            // Configura la clave de API para la compilación de lanzamiento
+
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -48,10 +59,22 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
+    packaging {
+        resources {
+            excludes + "META-INF/gradle/incremental.annotation.processors"
+        }
+        resources {
+            jniLibs.pickFirsts.add("lib/**/libc++_shared.so")
+
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -130,5 +153,10 @@ dependencies {
 
     //Animate Icons
     implementation("com.airbnb.android:lottie-compose:6.0.0")
+
+
+    //TOM TOM API palce finder
+    //implementation ("com.tomtom.online:sdk-maps:6.0.0")
+    //implementation ("com.tomtom.online:sdk-search:6.0.0")
 
 }
