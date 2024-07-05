@@ -371,6 +371,9 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                                                     text = "Car: ${contract.car.model}",
                                                     style = MaterialTheme.typography.labelMedium
                                                 )
+                                                Text(text = "Pick Up: ${it.pickUpLocation?: ""}")
+                                                Text(text = "Drop Up: ${it.dropOffLocation?: ""}")
+
                                                 Text(
                                                     text = "Rating Range: ${
                                                         formatDateToDayMonthYear(
