@@ -1,5 +1,6 @@
 package com.example.codriving.view.RentCarPage
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -239,12 +240,26 @@ fun bodyRest(
                                 val startformattedDate: String = dateFormat.format(startDate)
                                 val endformattedDate: String = dateFormat.format(endDate)
 
-                                Row {
-                                    Text(
-                                        text = it.pricePerDay.toString() + "€/day " + startformattedDate + " - " + endformattedDate,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 18.sp
-                                    )
+                                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Column {
+                                        Text(
+                                            text = it.pricePerDay.toString() + "€/day " + startformattedDate + " - " + endformattedDate,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp
+                                        )
+                                        Log.d("RentCar: ", it.toString())
+                                        Text(
+                                            text = "\t\tPick Up: ${if (it.pickUpLocation.isNullOrEmpty()) "Anywhere" else it.pickUpLocation}",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 10.sp
+                                        )
+                                        Text(
+                                            text = "\t\tDrop Off: ${if (it.dropOffLocation.isNullOrEmpty()) "Anywhere" else it.dropOffLocation}",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 10.sp
+                                        )
+
+                                    }
 
                                 }
                             }

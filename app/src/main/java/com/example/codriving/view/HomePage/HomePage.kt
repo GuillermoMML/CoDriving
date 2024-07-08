@@ -5,6 +5,9 @@ package com.example.codriving.view.HomePage
 //noinspection UsingMaterialAndMaterial3Libraries
 //noinspection UsingMaterialAndMaterial3Libraries
 //noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,16 +19,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.Switch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Brightness4
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberModalBottomSheetState
@@ -39,6 +46,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -77,6 +86,7 @@ import com.example.codriving.view.HomePage.navigationBar.navigationBar
 import com.example.codriving.view.MyCarsPage.LoadScreen
 import com.example.codriving.view.SearchPage.SearchPageScreen
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
@@ -241,9 +251,14 @@ fun HomePage(
     var isSearching by rememberSaveable {
         mutableStateOf(false)
     }
+    var findCars by remember {
+        mutableStateOf(false)
+    }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-
+    var findAvailable by remember {
+        mutableStateOf(false)
+    }
     val reachedBottom: Boolean by remember {
         derivedStateOf {
             val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
@@ -272,7 +287,13 @@ fun HomePage(
                         viewModel,
                         bottomSheetState,
                         onSearch = {
-                            isSearching = !isSearching
+                            findAvailable = it
+                            isSearching = true
+                            scope.launch {
+                                delay(100)
+                                findCars = !findCars
+
+                            }
                         },
                         onLogOut = {
                             if (viewModel.logOut()) {
@@ -332,6 +353,8 @@ fun HomePage(
                             }
                         } else {
                             SearchPageScreen(
+                                findCars = findCars,
+                                findAvailable = findAvailable,
                                 pickUp = viewModel.pickUp.value,
                                 dropOff = viewModel.dropOff.value,
                                 startTime = viewModel.selectedStartDay.value,
@@ -364,7 +387,7 @@ fun HeaderHome(
     scrollBehavior: TopAppBarScrollBehavior,
     viewModel: HomeViewModel,
     bottomSheetState: ModalBottomSheetState,
-    onSearch: () -> Unit,
+    onSearch: (Boolean) -> Unit,
     onLogOut: () -> Unit,
     onProfile: () -> Unit,
     themeViewModel: ThemeViewModel,
@@ -376,10 +399,15 @@ fun HeaderHome(
     val viewModelPickUp = AddressAutocompleteViewModel()
     val viewModelDropOff = AddressAutocompleteViewModel()
 
+    var expandedFilters by remember {
+        mutableStateOf(false)
+    }
     val expanded = remember {
         mutableStateOf(false)
     }
-
+    var notAvailables by remember {
+        mutableStateOf(false)
+    }
     val coroutineScope = rememberCoroutineScope()
     Column {
         CenterAlignedTopAppBar(
@@ -459,55 +487,94 @@ fun HeaderHome(
             scrollBehavior = scrollBehavior,
         )
         Column {
-            Box(
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp),
-                contentAlignment = Alignment.Center
+
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { expandedFilters = !expandedFilters }) {
+                    Text(text = "Filters")
+                    Icon(
+                        if (expandedFilters) Icons.Default.ArrowDropDown else Icons.Default.ArrowDropUp,
+                        contentDescription = "Expanded Filters"
+                    )
+                }
+            }
+            AnimatedVisibility(
+                visible = expandedFilters,
+                enter = expandVertically(),
+                exit = shrinkVertically()
             ) {
                 Column {
-                    AddressAutocompleteScreen(
-                        "Pick Up",
-                        returnQuery = {
-                            viewModel.setPickUpandDropOff(it, dropOff.value)
-                        },
-                        viewModel = viewModelPickUp
 
-                    )
+                    Box(
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "Find cars with available dates:")
+                                Switch(
+                                    checked = notAvailables,
+                                    onCheckedChange = { notAvailables = it },
+                                    thumbContent = {
+                                        Icon(
+                                            imageVector = if (notAvailables) Icons.Filled.Check else Icons.Filled.Close,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    }
+                                )
+                            }
+                            AddressAutocompleteScreen(
+                                "Pick Up",
+                                returnQuery = {
+                                    viewModel.setPickUpandDropOff(it, dropOff.value)
+                                },
+                                viewModel = viewModelPickUp
 
-                    AddressAutocompleteScreen(
-                        "Drop Off",
-                        returnQuery = {
-                            viewModel.setPickUpandDropOff(pickUp.value, it)
-                        },
-                        viewModel = viewModelDropOff
-                    )
-                }
+                            )
 
-            }
-            Row(
-                Modifier
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Finder(
-                    viewModel = viewModel,
-                    selectStartDay = selectstartDay,
-                    selectEndDay = selectEndDay,
-                ) {
-                    coroutineScope.launch {
-                        bottomSheetState.show()
+                            AddressAutocompleteScreen(
+                                "Drop Off",
+                                returnQuery = {
+                                    viewModel.setPickUpandDropOff(pickUp.value, it)
+                                },
+                                viewModel = viewModelDropOff
+                            )
+                        }
+
                     }
-                }
-                IconButton(
-                    onClick = { onSearch() },
-                ) {
-                    Icon(Icons.Filled.Search, contentDescription = null)
-                }
+                    Row(
+                        Modifier
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Finder(
+                            viewModel = viewModel,
+                            selectStartDay = selectstartDay,
+                            selectEndDay = selectEndDay,
+                        ) {
+                            coroutineScope.launch {
+                                bottomSheetState.show()
+                            }
+                        }
+                        IconButton(
+                            onClick = { onSearch(notAvailables) },
+                        ) {
+                            Icon(Icons.Filled.Search, contentDescription = null)
+                        }
+                    }
 
+                }
 
             }
 
         }
+
     }
 
 }

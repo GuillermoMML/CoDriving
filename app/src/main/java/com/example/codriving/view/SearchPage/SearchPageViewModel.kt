@@ -1,5 +1,6 @@
 package com.example.codriving.view.SearchPage
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -25,10 +26,17 @@ class SearchPageViewModel @Inject constructor(
     val carListEnable: StateFlow<HashMap<String, Car>> = _carListEnables
 
 
-
-    suspend fun getRentsFromRange(startDate: Date, endDate: Date, pickUp: String, dropOff: String) {
+    suspend fun getRentsFromRange(
+        startDate: Date,
+        endDate: Date,
+        pickUp: String,
+        dropOff: String,
+        findAvailable: Boolean
+    ) {
         _isLoading.value = true
-        _rentListCar.value = searchRepository.findAvailableCars(startDate, endDate, pickUp, dropOff)
+        Log.d("findAvailable", findAvailable.toString())
+        _rentListCar.value =
+            searchRepository.findAvailableCars(startDate, endDate, pickUp, dropOff, findAvailable)
 
         _carListEnables.value = searchRepository.getCarReferences(rentCars = _rentListCar.value)
         _isLoading.value = false

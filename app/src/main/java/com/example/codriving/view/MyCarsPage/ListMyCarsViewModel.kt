@@ -71,8 +71,12 @@ class ListMyCarsViewModel @Inject constructor(
         _endDay.value = day
     }
 
-    suspend fun verifyPublishFields(idCar: String, pickup: String, dropoff: String): Boolean {
-        if (_startDay.value.equals(null) || _endDay.value.equals(null) || _price.value == "" || pickup.isEmpty() || dropoff.isEmpty()) {
+    suspend fun verifyPublishFields(
+        idCar: String,
+        pickup: String = "",
+        dropoff: String = ""
+    ): Boolean {
+        if (_startDay.value.equals(null) || _endDay.value.equals(null) || _price.value == "") {
             return false
         } else {
             uploadCarRepository.publishRentCar(

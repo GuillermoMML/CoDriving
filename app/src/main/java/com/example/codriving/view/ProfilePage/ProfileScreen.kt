@@ -2,6 +2,9 @@ package com.example.codriving.view.ProfilePage
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +39,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -82,6 +86,9 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
     var review by remember { mutableStateOf("") }
     var resultReviewMessage by remember {
         mutableStateOf("")
+    }
+    var expanded by remember {
+        mutableStateOf(false)
     }
     val resultMessage = viewModel.chagingPasswordResult.observeAsState("")
     var passwordAgain by remember { mutableStateOf("") }
@@ -338,77 +345,84 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
 
                     if (contracts.value.isNotEmpty()) {
                         item {
-                            Text(text = "Renting")
+                            TextButton(onClick = { expanded = !expanded }) {
+                                Text(text = "Rental History")
+                            }
                         }
-                        contracts.value.forEach { (_, contract) ->
-                            var expired: String
-                            contract.rentCars.forEach {
-                                item {
-                                    Column {
-                                        Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            if (today.after(it.endDate.toDate())) {
-                                                expired = "Expired"
-                                            } else {
-                                                expired = "Active"
-                                            }
-                                            Column(
-                                                horizontalAlignment = Alignment.Start,
-                                                modifier = Modifier.weight(0.9f)
-                                            ) {
-                                                // Iterate through contracts and display each row
-                                                Text(
-                                                    text = "Owner: ${contract.owner.fullName}",
-                                                    style = MaterialTheme.typography.labelMedium
-                                                )
-                                                Text(
-                                                    text = "Client: ${contract.client.fullName}",
-                                                    style = MaterialTheme.typography.labelMedium
-                                                )
-                                                Text(
-                                                    text = "Car: ${contract.car.model}",
-                                                    style = MaterialTheme.typography.labelMedium
-                                                )
-                                                Text(text = "Pick Up: ${it.pickUpLocation?: ""}")
-                                                Text(text = "Drop Up: ${it.dropOffLocation?: ""}")
-
-                                                Text(
-                                                    text = "Rating Range: ${
-                                                        formatDateToDayMonthYear(
-                                                            it.startDate.toDate()
+                        item {
+                            AnimatedVisibility(
+                                visible = expanded,
+                                enter = expandVertically(),
+                                exit = shrinkVertically()
+                            ) {
+                                Column {
+                                    contracts.value.forEach { (_, contract) ->
+                                        var expired: String
+                                        Column {
+                                            contract.rentCars.forEach {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    expired =
+                                                        if (today.after(it.endDate.toDate())) {
+                                                            "Expired"
+                                                        } else {
+                                                            "Active"
+                                                        }
+                                                    Column(
+                                                        horizontalAlignment = Alignment.Start,
+                                                        modifier = Modifier.weight(0.9f)
+                                                    ) {
+                                                        // Iterate through contracts and display each row
+                                                        Text(
+                                                            text = "Owner: ${contract.owner.fullName}",
+                                                            style = MaterialTheme.typography.labelMedium
                                                         )
-                                                    } - ${
-                                                        formatDateToDayMonthYear(
-                                                            it.endDate.toDate()
+                                                        Text(
+                                                            text = "Client: ${contract.client.fullName}",
+                                                            style = MaterialTheme.typography.labelMedium
                                                         )
-                                                    }  ${expired}",
-                                                    style = MaterialTheme.typography.labelMedium
-                                                )
+                                                        Text(
+                                                            text = "Car: ${contract.car.model}",
+                                                            style = MaterialTheme.typography.labelMedium
+                                                        )
+                                                        Text(
+                                                            text = "Pick Up: ${it.pickUpLocation}",
+                                                            style = MaterialTheme.typography.labelMedium
+                                                        )
+                                                        Text(
+                                                            text = "Drop Up: ${it.dropOffLocation}",
+                                                            style = MaterialTheme.typography.labelMedium
+                                                        )
 
-                                            }
-                                            if (expired == "Expired" && contract.car.owner!!.id != FirebaseAuth.getInstance().uid) {
-                                                IconButton(onClick = {
-                                                    setContractReview = contract
-                                                }) {
-                                                    Icon(
-                                                        Icons.AutoMirrored.Filled.Comment,
-                                                        contentDescription = null
-                                                    )
+                                                        Text(
+                                                            text = "Rating Range: ${
+                                                                formatDateToDayMonthYear(it.startDate.toDate())
+                                                            } - ${
+                                                                formatDateToDayMonthYear(it.endDate.toDate())
+                                                            }  $expired",
+                                                            style = MaterialTheme.typography.labelMedium
+                                                        )
+                                                    }
+                                                    if (expired == "Expired" && contract.car.owner!!.id != FirebaseAuth.getInstance().uid) {
+                                                        IconButton(onClick = {
+                                                            setContractReview = contract
+                                                        }) {
+                                                            Icon(
+                                                                Icons.AutoMirrored.Filled.Comment,
+                                                                contentDescription = null
+                                                            )
+                                                        }
+                                                    }
                                                 }
-
+                                                HorizontalDivider()
                                             }
                                         }
-                                        HorizontalDivider()
-
                                     }
-
                                 }
                             }
                         }
-
-
                     }
                     item {
                         Button(

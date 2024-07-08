@@ -225,7 +225,9 @@ class UploadCarRepository @Inject constructor(
                     pricePerDay = rentCarDocument["pricePerDay"] as Double,
                     startDate = rentCarDocument["startDate"] as Timestamp,
                     endDate = rentCarDocument["endDate"] as Timestamp,
-                    busy = rentCarDocument["busy"] as Boolean
+                    busy = rentCarDocument["busy"] as Boolean,
+                    pickUpLocation = rentCarDocument["pickUpLocation"] as? String ?: "",
+                    dropOffLocation = rentCarDocument["dropOffLocation"] as? String ?: ""
                 )
                 rentCarsMap[documentId.reference] =
                     rentCar  // Add RentCar to map with document ID as key
@@ -303,14 +305,17 @@ class UploadCarRepository @Inject constructor(
     suspend fun getCarRentByReference(ref: DocumentReference): RentCars? {
         val documentSnapshot = ref.get().await()
         if (documentSnapshot != null && documentSnapshot.exists()) {
-
+            Log.d("RentCar Id", documentSnapshot.id)
             val rentCar = RentCars(
                 carId = documentSnapshot["carId"] as DocumentReference,
                 ownerName = documentSnapshot["ownerName"] as String,
                 pricePerDay = documentSnapshot["pricePerDay"] as Double,
                 startDate = documentSnapshot["startDate"] as Timestamp,
                 endDate = documentSnapshot["endDate"] as Timestamp,
-                busy = documentSnapshot["busy"] as Boolean
+                busy = documentSnapshot["busy"] as Boolean,
+                pickUpLocation = documentSnapshot["pickUpLocation"] as? String ?: "No available",
+                dropOffLocation = documentSnapshot["dropOffLocation"] as? String ?: "No available"
+
             )
             return rentCar
 
@@ -318,13 +323,6 @@ class UploadCarRepository @Inject constructor(
             return null
         }
     }
-
-    /*suspend fun getCarPrice(rentRef: DocumentReference): String {
-        val rentCarDocument = rentRef.get().await()
-        return rentCarDocument["pricePerDay"] as String
-    }*/
-
-
     fun getPreviewReviewByCar(id: String, onComplete: (Map<User, RentReview>?) -> Unit) {
         val result = mutableMapOf<User, RentReview>()
         firestore.collection("Cars").document(id).collection("reviews").get()

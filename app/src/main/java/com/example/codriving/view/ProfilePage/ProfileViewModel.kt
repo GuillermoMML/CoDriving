@@ -81,11 +81,11 @@ class ProfileViewModel @Inject constructor(
             )
             if (listOfContracts.isNotEmpty()) {
 
-                listOfContracts.forEach {
+                listOfContracts.forEach { it ->
                     val rentCars = mutableListOf<RentCars>()  // Use a mutable list
                     it.rentCars.forEach {
                         rentCars.add(uploadCarRepository.getCarRentByReference(it!!)!!)
-                        print(rentCars)
+                        Log.d("Rentas: ", rentCars.toString())
                     }
                     val requestContracts = RequestContracts(
                         car = uploadCarRepository.getCarById(it.idProduct!!),

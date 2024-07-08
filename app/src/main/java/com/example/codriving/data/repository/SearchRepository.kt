@@ -17,7 +17,8 @@ class SearchRepository @Inject constructor(private val firestore: FirebaseFirest
         startDate: Date,
         endDate: Date,
         pickUp: String,
-        dropOff: String
+        dropOff: String,
+        findAvailable: Boolean
     ): List<RentCars> {
 
         val firebaseStartDate = Timestamp(startDate)
@@ -53,17 +54,17 @@ class SearchRepository @Inject constructor(private val firestore: FirebaseFirest
                 dropOffLocation
             )
         }
-
         // Filtrar los autos en memoria según las condiciones parciales
         val filteredCars = cars.filter { car ->
-            (pickUp.isBlank() || car.pickUpLocation?.contains(
-                pickUp,
-                ignoreCase = true
-            ) ?: false) &&
-                    (dropOff.isBlank() || car.dropOffLocation?.contains(
-                        dropOff,
-                        ignoreCase = true
-                    ) ?: false)
+            if (findAvailable) {
+                car.busy == false // Only include cars with busy == true when findAvailable is true
+            } else {
+                true // Include all cars when findAvailable is false (no busy filter)
+            } &&
+                    (pickUp.isBlank() || (car.pickUpLocation?.contains(pickUp, ignoreCase = true)
+                        ?: false)) &&
+                    (dropOff.isBlank() || (car.dropOffLocation?.contains(dropOff, ignoreCase = true)
+                        ?: false))
         }.distinctBy { it.carId }
 
         // Devolver la lista de RentCars filtrada

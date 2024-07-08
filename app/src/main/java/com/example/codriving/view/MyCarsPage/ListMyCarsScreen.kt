@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -132,7 +133,8 @@ fun ListMyCarsScreen(navController: NavHostController) {
                             .zIndex(1F)
                             .background(Color.Black.copy(alpha = 0.6f)),
                     ) {
-                        DialogWithImage(viewModel,
+                        DialogWithImage(
+                            viewModel,
                             item = currentCar,
                             onDismissRequest = { showModal = false },
                             onConfirmation = {
@@ -146,7 +148,7 @@ fun ListMyCarsScreen(navController: NavHostController) {
                                     bottomSheetState.show()
                                 }
 
-                            }
+                            },
                         )
 
                     }
@@ -229,6 +231,7 @@ fun DialogWithImage(
     onDismissRequest: () -> Unit,
     onConfirmation: () -> Unit,
     onShowDatePicker: (Boolean) -> Unit,
+
 ) {
     var pickUp by remember { mutableStateOf("") }
     var dropoff by remember { mutableStateOf("") }
@@ -237,6 +240,8 @@ fun DialogWithImage(
     val endDay by viewModel.endDay.collectAsState()
     val isUploadingRent = remember { mutableStateOf(false) }
     var sameDropOff by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf(false) }
+
     val coroutineScope = rememberCoroutineScope()
     val actualCar = item.values.first()
     val viewModelPickUp = AddressAutocompleteViewModel()
@@ -246,18 +251,25 @@ fun DialogWithImage(
     Card(
         modifier = Modifier
             .zIndex(1f)
+            .fillMaxWidth()
             .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
     ) {
         if (viewModel.isLoadPublished.value == true) {
-            Column(
-                modifier = Modifier.size(200.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
             ) {
-                Text(text = "It has been published successfully\n")
-                OutlinedButton(onClick = onConfirmation) {
-                    Text(text = "Ok")
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = "It has been published successfully\n")
+                    OutlinedButton(onClick = onConfirmation) {
+                        Text(text = "Ok")
+                    }
                 }
             }
         } else {
@@ -307,7 +319,9 @@ fun DialogWithImage(
                                 }
                                 pickUp = it
                             },
-                            viewModel = viewModelPickUp
+                            viewModel = viewModelPickUp,
+                            infoMessage = "\"Optional Field. If nothing is entered, any location will be accepted.\"\n" +
+                                    "\n"
                         )
                         AnimatedVisibility(
                             visible = !sameDropOff,
@@ -317,7 +331,9 @@ fun DialogWithImage(
                             AddressAutocompleteScreen(
                                 labelHolder = "Drop off",
                                 returnQuery = { dropoff = it },
-                                viewModel = viewModelDropOff
+                                viewModel = viewModelDropOff,
+                                infoMessage = "\"Optional Field. If nothing is entered, any location will be accepted.\"\n" +
+                                        "\n"
 
                             )
                         }
@@ -354,7 +370,7 @@ fun DialogWithImage(
                                 onClick = {
                                     coroutineScope.launch {
                                         isUploadingRent.value = true
-                                        viewModel.verifyPublishFields(
+                                        errorMessage = !viewModel.verifyPublishFields(
                                             idCar = item.keys.first(),
                                             pickUp,
                                             dropoff
@@ -367,6 +383,12 @@ fun DialogWithImage(
                             ) {
                                 Text("Publish")
                             }
+                        }
+                        if (errorMessage) {
+                            Text(
+                                text = "You must fill in all the required fields.",
+                                color = Color.Red
+                            )
                         }
                     }
                 }
