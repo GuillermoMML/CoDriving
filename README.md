@@ -54,6 +54,6 @@ buildConfigField("String", "GEOCODE_API_KEY", "\"${geocodeApiKey}\"")
 ```
 * Luego compilamos y ejecutamos
 ## Objetivos Personales
-La creación de CoDriving ha permitido la adquisición de valiosas experiencias en el establecimiento de criterios para la toma de decisiones durante todo el ciclo de desarrollo de una aplicación de software. Este proyecto, diseñado para ser completamente exportable a otras plataformas, ha incrementado nuestra comprensión del ecosistema de desarrollo, abarcando herramientas como Android Studio, Jetpack y los Frameworks empleados.
+La creación de CoDriving ha permitido la adquisición de valiosas experiencias en el establecimiento de criterios para la toma de decisiones durante todo el ciclo de desarrollo de una aplicación de software. Este proyecto, diseñado para ser completamente exportable a otras plataformas, ha incrementado mi comprensión del ecosistema de desarrollo, abarcando herramientas como Android Studio, Jetpack y los Frameworks empleados.
 
 Este README proporciona una visión general del proyecto CODriving, detallando su propósito, funcionalidades, tecnologías utilizadas y cómo ejecutarlo. 
