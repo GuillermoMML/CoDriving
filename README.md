@@ -40,7 +40,6 @@ El objetivo principal de CoDrive como propuesta de Trabajo Fin de Grado es desar
 Si queremos ejecutarlo solo desde Android Studios, necesitamos hacer los siguientes pasos:
 
 * Instalamos en la web oficinal Android Studios el [IDE Giraffe](https://developer.android.com/studio/releases/past-releases/as-giraffe-release-notes?hl=es-419) (en mi caso descargué Giraffe)
-* Clonamos el proyecto, compilamos y ejecutamos, recuerda tener un dispositivo mínimo API 26
 * En build.gradle.kts coopiamos Y pegamos lo siguiente.
 ```kotlin
 //Fuera de android{}
