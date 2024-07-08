@@ -40,6 +40,7 @@ El objetivo principal de CoDrive como propuesta de Trabajo Fin de Grado es desar
 Si queremos ejecutarlo solo desde Android Studios, necesitamos hacer los siguientes pasos:
 
 * Instalamos en la web oficinal Android Studios el [IDE Giraffe](https://developer.android.com/studio/releases/past-releases/as-giraffe-release-notes?hl=es-419) (en mi caso descargué Giraffe)
+* Tenemos que clonar este repositorio
 * En build.gradle.kts coopiamos Y pegamos lo siguiente.
 ```kotlin
 //Fuera de android{}
@@ -53,6 +54,6 @@ buildConfigField("String", "GEOCODE_API_KEY", "\"${geocodeApiKey}\"")
 ```
 * Luego compilamos y ejecutamos
 ## Objetivos Personales
-La creación de CODriving ha permitido la adquisición de valiosas experiencias en el establecimiento de criterios para la toma de decisiones durante todo el ciclo de desarrollo de una aplicación de software. Este proyecto, diseñado para ser completamente exportable a otras plataformas, ha incrementado nuestra comprensión del ecosistema de desarrollo, abarcando herramientas como Android Studio, Jetpack y los Frameworks empleados.
+La creación de CoDriving ha permitido la adquisición de valiosas experiencias en el establecimiento de criterios para la toma de decisiones durante todo el ciclo de desarrollo de una aplicación de software. Este proyecto, diseñado para ser completamente exportable a otras plataformas, ha incrementado nuestra comprensión del ecosistema de desarrollo, abarcando herramientas como Android Studio, Jetpack y los Frameworks empleados.
 
 Este README proporciona una visión general del proyecto CODriving, detallando su propósito, funcionalidades, tecnologías utilizadas y cómo ejecutarlo. 
