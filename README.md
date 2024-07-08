@@ -16,7 +16,8 @@ El proyecto Codrive, propone desarrollar una aplicación móvil para dispositivo
 * Presentación
 * Funciones.
 * Ejecución.
-* Tecnologías
+* Objetivos Personales
+
 
 ## Presentación
 
