@@ -1,17 +1,7 @@
 # CoDriving
 
 ## Descripción
-El proyecto Codrive, propone desarrollar una aplicaci ́on m ́ovil para disposi-
-tivos Android que gestione el acceso y uso de veh ́ıculos ofrecidos en pr ́estamo.
-La aplicaci ́on tiene como objetivo mejorar la movilidad al ofrecer una plata-
-forma segura y eficiente para compartir veh ́ıculos, promoviendo un modelo
-de transporte sostenible. Se utilizar ́a una metodolog ́ıa  ́agil para el dise ̃no, en-
-focada en la experiencia del usuario, la seguridad y la facilidad de uso. Los
-objetivos clave incluyen facilitar el acceso a veh ́ıculos compartidos, optimizar
-su uso para reducir tiempos de inactividad, contribuir a una movilidad m ́as
-sostenible, y ofrecer una experiencia segura mediante tecnolog ́ıas avanzadas
-y protocolos estrictos.
-
+El proyecto Codrive, propone desarrollar una aplicación móvil para dispositivos Android que gestione el acceso y uso de vehículos ofrecidos en préstamo. La aplicación tiene como objetivo mejorar la movilidad al ofrecer una plataforma segura y eficiente para compartir vehículos, promoviendo un modelo de transporte sostenible. Se utilizará una metodología ágil para el diseño, enfocada en la experiencia del usuario, la seguridad y la facilidad de uso. Los objetivos clave incluyen facilitar el acceso a vehículos compartidos, optimizar su uso para reducir tiempos de inactividad, contribuir a una movilidad más sostenible y ofrecer una experiencia segura mediante tecnologías avanzadas y protocolos estrictos.
 
 ## Tecnologías utilizadas
 
