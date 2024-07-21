@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.StarHalf
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Star
@@ -31,6 +32,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -74,6 +76,7 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -95,7 +98,7 @@ fun RentCarScreen(
     val error by rentCarViewModel.error.observeAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val listOfRents = rentCarViewModel.listOfRents.observeAsState()
+    val listOfRents = rentCarViewModel.listOfRents.observeAsState(emptyMap())
     val ownerUser = rentCarViewModel.ownerUser.observeAsState()
     val listOfReview = rentCarViewModel.listOfReviews.observeAsState(emptyMap())
 
@@ -135,21 +138,21 @@ fun RentCarScreen(
                 ) {
                     if (ownerUser.value != User()) {
                         CarouselCard(car!!.image)
-                        listOfRents.let {
-                            it.value?.let { it1 ->
-                                bodyRest(
-                                    rentCarViewModel,
-                                    it1,
-                                    car!!,
-                                    ownerUser.value!!,
-                                    listOfReview.value,
-                                    onClickConversation = {
-                                        navController.navigate(AppScreens.ConversationScreen.route)
-                                    },
-                                    onClickBook = {
-                                        navController.navigate("${AppScreens.BookRentScreen.route}/${idRentCar}")
-                                    })
-
+                        listOfRents.value.let {
+                            bodyRest(
+                                rentCarViewModel,
+                                it,
+                                car!!,
+                                ownerUser.value!!,
+                                listOfReview.value,
+                                onClickConversation = {
+                                    navController.navigate(AppScreens.ConversationScreen.route)
+                                },
+                                onClickBook = {
+                                    navController.navigate("${AppScreens.BookRentScreen.route}/${idRentCar}")
+                                }
+                            ) { reference, rentCar ->
+                                rentCarViewModel.removeRentCar(reference, rentCar)
                             }
                         }
                     } else {
@@ -198,12 +201,13 @@ fun RatingBar(
 @Composable
 fun bodyRest(
     viewModel: RentCarViewModel,
-    rentCars: List<RentCars>,
+    rentCars: Map<DocumentReference, RentCars>,
     car: Car,
     ownerUser: User,
     listofReview: Map<User, RentReview>,
     onClickBook: () -> Unit,
-    onClickConversation: () -> Unit
+    onClickConversation: () -> Unit,
+    onDelete: (DocumentReference, RentCars) -> Unit
 ) {
     val formattedRating = "%.2f".format(Locale.ENGLISH, car.rating)
     val scope = rememberCoroutineScope()
@@ -232,7 +236,7 @@ fun bodyRest(
             } else {
                 ExpandableItem(title = "Time Available", expanded = rentTimes, content = {
                     Column {
-                        rentCars.forEach {
+                        rentCars.forEach { (reference, it) ->
                             if (it.busy != true) {
                                 val startDate: Date = it.startDate.toDate()
                                 val endDate: Date = it.endDate.toDate()
@@ -240,28 +244,40 @@ fun bodyRest(
                                 val startformattedDate: String = dateFormat.format(startDate)
                                 val endformattedDate: String = dateFormat.format(endDate)
 
-                                Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Column {
+                                Column(modifier = Modifier.fillMaxWidth()) {
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
                                         Text(
                                             text = it.pricePerDay.toString() + "€/day " + startformattedDate + " - " + endformattedDate,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 12.sp
                                         )
-                                        Log.d("RentCar: ", it.toString())
-                                        Text(
-                                            text = "\t\tPick Up: ${if (it.pickUpLocation.isNullOrEmpty()) "Anywhere" else it.pickUpLocation}",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 10.sp
-                                        )
-                                        Text(
-                                            text = "\t\tDrop Off: ${if (it.dropOffLocation.isNullOrEmpty()) "Anywhere" else it.dropOffLocation}",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 10.sp
-                                        )
+                                        if (car.owner?.id.equals(Firebase.auth.uid)) {
+
+                                            IconButton(onClick = { onDelete(reference, it) }) {
+                                                Icon(Icons.Filled.Delete, contentDescription = null)
+                                            }
+                                        }
 
                                     }
+                                    Log.d("RentCar: ", it.toString())
+                                    Text(
+                                        text = "\t\tPick Up: ${if (it.pickUpLocation.isNullOrEmpty()) "Anywhere" else it.pickUpLocation}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    )
+                                    Text(
+                                        text = "\t\tDrop Off: ${if (it.dropOffLocation.isNullOrEmpty()) "Anywhere" else it.dropOffLocation}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    )
 
                                 }
+
                             }
 
 

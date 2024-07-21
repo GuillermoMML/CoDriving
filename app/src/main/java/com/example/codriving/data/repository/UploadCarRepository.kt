@@ -380,6 +380,32 @@ class UploadCarRepository @Inject constructor(
             }
     }
 
+    suspend fun deleteRentCar(referenceRentCar: DocumentReference?, rentCar: RentCars?) {
+
+        val carSnapshot = rentCar?.carId?.get()?.await()
+        if (carSnapshot != null) {
+            if (carSnapshot.exists()) {
+                val carIdRef = carSnapshot.reference
+
+                val auxCar = carSnapshot.toObject(Car::class.java)
+                val updatedRentCars = auxCar?.rentCars?.filterNot { it == referenceRentCar }
+                auxCar?.rentCars = updatedRentCars ?: emptyList()
+
+                // Actualizar el documento Car con la lista rentCars actualizada
+                carIdRef.set(auxCar!!).await()
+
+                Log.d(
+                    "DeleteRentCar",
+                    "Rent car successfully deleted and removed from car's rentCars list"
+                )
+
+
+            }
+        }
+
+
+    }
+
 }
 
 class UploadCarRepositoryException(message: String, cause: Throwable?) : Exception(message, cause)
